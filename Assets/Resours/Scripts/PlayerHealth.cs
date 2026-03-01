@@ -11,15 +11,14 @@ public class PlayerController : MonoBehaviour
     private int currentHealth;
     
     [Header("Смерть")]
-    public GameObject deathEffectPrefab;     // Эффект смерти (партиклы)
-    public AudioClip deathSound;              // Звук смерти
-    public float deathAnimationDuration = 0.5f; // Длительность анимации смерти
+    public GameObject deathEffectPrefab;
+    public AudioClip deathSound;
     
     [Header("Возрождение")]
-    public Transform respawnPoint;
+    public Transform respawnPoint;        // Точка спавна
     public float respawnDelay = 2f;
-    public GameObject respawnEffectPrefab;    // Эффект возрождения
-    public AudioClip respawnSound;             // ЗВУК ВОЗРОЖДЕНИЯ
+    public GameObject respawnEffectPrefab;
+    public AudioClip respawnSound;
     
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
@@ -41,27 +40,32 @@ public class PlayerController : MonoBehaviour
         
         currentHealth = maxHealth;
         
+        // Если точка спавна не назначена, создаем на текущей позиции
         if (respawnPoint == null)
         {
-            GameObject respawnObj = new GameObject("RespawnPoint");
-            respawnObj.transform.position = transform.position;
-            respawnPoint = respawnObj.transform;
+            GameObject spawnObj = new GameObject("SpawnPoint");
+            spawnObj.transform.position = transform.position;
+            respawnPoint = spawnObj.transform;
         }
     }
     
     void Update()
     {
+        // ЕСЛИ МЕРТВ - НИЧЕГО НЕ ДЕЛАЕМ, ВООБЩЕ НИЧЕГО
         if (isDead) return;
         
+        // Движение только если жив
         if (Input.GetMouseButton(0))
         {
             Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mousePos.z = transform.position.z;
+            
+            // Просто двигаемся к курсору
             transform.position = Vector3.MoveTowards(transform.position, mousePos, moveSpeed * Time.deltaTime);
         }
     }
     
-    // ВЫЗЫВАЕТСЯ ПРИ ПОПАДАНИИ ПУЛИ
+    // Урон от пули
     public void TakeDamage(int damage)
     {
         if (isDead) return;
@@ -71,17 +75,16 @@ public class PlayerController : MonoBehaviour
         
         if (currentHealth <= 0)
         {
-            StartCoroutine(Die()); // Запускаем анимацию смерти
+            Die();
         }
     }
     
-    // ВЫЗЫВАЕТСЯ ПРИ КАСАНИИ СТЕНЫ-ВРАГА
+    // Смерть от стены
     void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("EnemyWall") && !isDead)
         {
-            Debug.Log("Смерть от стены!");
-            StartCoroutine(Die()); // Запускаем анимацию смерти
+            Die();
         }
     }
     
@@ -89,20 +92,19 @@ public class PlayerController : MonoBehaviour
     {
         if (other.CompareTag("EnemyWall") && !isDead)
         {
-            Debug.Log("Смерть от стены!");
-            StartCoroutine(Die()); // Запускаем анимацию смерти
+            Die();
         }
     }
     
-    IEnumerator Die()
+    void Die()
     {
-        if (isDead) yield break;
+        if (isDead) return;
         
         isDead = true;
         
-        Debug.Log("Игрок умирает...");
+        Debug.Log("Игрок умер!");
         
-        // Отключаем физику и коллайдер
+        // ПОЛНОСТЬЮ ОТКЛЮЧАЕМ ИГРОКА
         if (rb != null)
         {
             rb.velocity = Vector2.zero;
@@ -114,39 +116,18 @@ public class PlayerController : MonoBehaviour
             playerCollider.enabled = false;
         }
         
-        // АНИМАЦИЯ СМЕРТИ (для пули и стены)
-        float elapsedTime = 0f;
-        Vector3 startScale = transform.localScale;
-        Color originalColor = spriteRenderer.color;
-        
-        while (elapsedTime < deathAnimationDuration)
+        if (spriteRenderer != null)
         {
-            // Плавно уменьшаем прозрачность
-            float alpha = Mathf.Lerp(1f, 0f, elapsedTime / deathAnimationDuration);
-            spriteRenderer.color = new Color(originalColor.r, originalColor.g, originalColor.b, alpha);
-            
-            // Увеличиваем размер (эффект взрыва)
-            float scale = 1 + (elapsedTime / deathAnimationDuration) * 0.5f;
-            transform.localScale = startScale * scale;
-            
-            // Вращаем
-            transform.Rotate(0, 0, 720 * Time.deltaTime);
-            
-            elapsedTime += Time.deltaTime;
-            yield return null;
+            spriteRenderer.enabled = false;
         }
         
-        // Полностью скрываем
-        spriteRenderer.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0f);
-        transform.localScale = startScale;
-        
-        // ЭФФЕКТ СМЕРТИ (партиклы)
+        // Эффект смерти
         if (deathEffectPrefab != null)
         {
             Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
         }
         
-        // ЗВУК СМЕРТИ
+        // Звук смерти
         if (deathSound != null && audioSource != null)
         {
             audioSource.PlayOneShot(deathSound);
@@ -158,18 +139,14 @@ public class PlayerController : MonoBehaviour
     
     IEnumerator Respawn()
     {
-        Debug.Log($"Возрождение через {respawnDelay} сек...");
+        Debug.Log($"Спавн через {respawnDelay} сек...");
         
         yield return new WaitForSeconds(respawnDelay);
         
-        Debug.Log("Возрождение!");
+        Debug.Log("Спавн!");
         
-        // Перемещаем на точку респауна
+        // Телепортируем на точку спавна
         transform.position = respawnPoint.position;
-        
-        // Сбрасываем вращение и размер
-        transform.rotation = Quaternion.identity;
-        transform.localScale = Vector3.one;
         
         // Восстанавливаем здоровье
         currentHealth = maxHealth;
@@ -187,59 +164,24 @@ public class PlayerController : MonoBehaviour
         
         if (spriteRenderer != null)
         {
-            spriteRenderer.color = Color.white;
             spriteRenderer.enabled = true;
         }
         
-        // ЭФФЕКТ ВОЗРОЖДЕНИЯ
+        // Эффект спавна
         if (respawnEffectPrefab != null)
         {
             Instantiate(respawnEffectPrefab, transform.position, Quaternion.identity);
         }
         
-        // ЗВУК ВОЗРОЖДЕНИЯ
+        // Звук спавна
         if (respawnSound != null && audioSource != null)
         {
             audioSource.PlayOneShot(respawnSound);
         }
         
-        // Маленькая анимация появления
-        StartCoroutine(SpawnAnimation());
-    }
-    
-    IEnumerator SpawnAnimation()
-    {
-        float elapsedTime = 0f;
-        float spawnDuration = 0.3f;
-        
-        // Начинаем с невидимого
-        spriteRenderer.color = new Color(1, 1, 1, 0);
-        transform.localScale = Vector3.zero;
-        
-        while (elapsedTime < spawnDuration)
-        {
-            float t = elapsedTime / spawnDuration;
-            
-            // Плавно появляемся
-            float alpha = Mathf.Lerp(0f, 1f, t);
-            spriteRenderer.color = new Color(1, 1, 1, alpha);
-            
-            // Увеличиваемся
-            transform.localScale = Vector3.one * Mathf.Lerp(0f, 1f, t);
-            
-            // Вращаемся при появлении
-            transform.Rotate(0, 0, -360 * Time.deltaTime * 2);
-            
-            elapsedTime += Time.deltaTime;
-            yield return null;
-        }
-        
-        // Финальные настройки
-        spriteRenderer.color = Color.white;
-        transform.localScale = Vector3.one;
-        
+        // Игрок снова жив
         isDead = false;
         
-        Debug.Log("Игрок снова жив!");
+        Debug.Log("Игрок заспавнился!");
     }
 }

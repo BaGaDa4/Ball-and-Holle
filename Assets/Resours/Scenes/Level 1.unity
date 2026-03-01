@@ -181,7 +181,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 0.34117648, g: 0.34117648, b: 0.34117648, a: 1}
+  m_Color: {r: 0.16981131, g: 0.16981131, b: 0.16981131, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -536,7 +536,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.735849, g: 0.735849, b: 0.735849, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -658,12 +658,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7454619375523375893, guid: d86432dc00c3581488f2d4f68707f14d, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8634496798441656561, guid: d86432dc00c3581488f2d4f68707f14d, type: 3}
       propertyPath: m_LocalPosition.z
       value: -0.38
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 3628755261881153843, guid: d86432dc00c3581488f2d4f68707f14d, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d86432dc00c3581488f2d4f68707f14d, type: 3}
@@ -917,7 +922,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.735849, g: 0.735849, b: 0.735849, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -1261,7 +1266,6 @@ MonoBehaviour:
   maxHealth: 1
   deathEffectPrefab: {fileID: 0}
   deathSound: {fileID: 8300000, guid: fd71aaca10acb9e4b93c2cccbe94b529, type: 3}
-  deathAnimationDuration: 0.5
   respawnPoint: {fileID: 2090940871}
   respawnDelay: 2
   respawnEffectPrefab: {fileID: 0}
@@ -1357,7 +1361,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.735849, g: 0.735849, b: 0.735849, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -1376,8 +1380,8 @@ Transform:
   m_GameObject: {fileID: 2123584310}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.48456, y: -0.00723, z: -2.87}
-  m_LocalScale: {x: 0.0469578, y: 1.0404364, z: 1}
+  m_LocalPosition: {x: 0.48456, y: -0.00668, z: -2.87}
+  m_LocalScale: {x: 0.0469578, y: 1.043695, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 167910907}
@@ -1439,9 +1443,21 @@ PrefabInstance:
       propertyPath: m_Name
       value: Stena
       objectReference: {fileID: 0}
+    - target: {fileID: 7243556714880715260, guid: 0bf5b3e7fe5f2e6489475c305739b0aa, type: 3}
+      propertyPath: m_Color.b
+      value: 0.735849
+      objectReference: {fileID: 0}
+    - target: {fileID: 7243556714880715260, guid: 0bf5b3e7fe5f2e6489475c305739b0aa, type: 3}
+      propertyPath: m_Color.g
+      value: 0.735849
+      objectReference: {fileID: 0}
+    - target: {fileID: 7243556714880715260, guid: 0bf5b3e7fe5f2e6489475c305739b0aa, type: 3}
+      propertyPath: m_Color.r
+      value: 0.735849
+      objectReference: {fileID: 0}
     - target: {fileID: 8726009787147965776, guid: 0bf5b3e7fe5f2e6489475c305739b0aa, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1.0389698
+      value: 1.0428797
       objectReference: {fileID: 0}
     - target: {fileID: 8726009787147965776, guid: 0bf5b3e7fe5f2e6489475c305739b0aa, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1449,7 +1465,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8726009787147965776, guid: 0bf5b3e7fe5f2e6489475c305739b0aa, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.00602
+      value: -0.00554
       objectReference: {fileID: 0}
     - target: {fileID: 8726009787147965776, guid: 0bf5b3e7fe5f2e6489475c305739b0aa, type: 3}
       propertyPath: m_LocalPosition.z
