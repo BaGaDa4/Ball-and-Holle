@@ -10,16 +10,16 @@ public class PlayerController : MonoBehaviour
     public int maxHealth = 3;
     private int currentHealth;
     
-    [Header("Исчезновение и анимация")]
-    public float disappearDuration = 0.5f;     // Как долго исчезать
-    public GameObject deathEffectPrefab;        // Эффект смерти (партиклы)
-    public AudioClip deathSound;                 // Звук смерти
+    [Header("Смерть")]
+    public GameObject deathEffectPrefab;     // Эффект смерти (партиклы)
+    public AudioClip deathSound;              // Звук смерти
+    public float deathAnimationDuration = 0.5f; // Длительность анимации смерти
     
     [Header("Возрождение")]
     public Transform respawnPoint;
     public float respawnDelay = 2f;
-    public GameObject respawnEffectPrefab;       // Эффект возрождения
-    public AudioClip respawnSound;                // ЗВУК РЕСПАУНА
+    public GameObject respawnEffectPrefab;    // Эффект возрождения
+    public AudioClip respawnSound;             // ЗВУК ВОЗРОЖДЕНИЯ
     
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
@@ -41,190 +41,190 @@ public class PlayerController : MonoBehaviour
         
         currentHealth = maxHealth;
         
-        // Точка возрождения
         if (respawnPoint == null)
         {
             GameObject respawnObj = new GameObject("RespawnPoint");
             respawnObj.transform.position = transform.position;
             respawnPoint = respawnObj.transform;
         }
-        
-        Debug.Log("Player готов. Здоровье: " + currentHealth);
     }
     
     void Update()
     {
         if (isDead) return;
         
-        // Движение за мышкой
         if (Input.GetMouseButton(0))
         {
             Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mousePos.z = transform.position.z;
-            transform.position = Vector3.Lerp(transform.position, mousePos, moveSpeed * Time.deltaTime);
+            transform.position = Vector3.MoveTowards(transform.position, mousePos, moveSpeed * Time.deltaTime);
         }
     }
     
+    // ВЫЗЫВАЕТСЯ ПРИ ПОПАДАНИИ ПУЛИ
     public void TakeDamage(int damage)
     {
         if (isDead) return;
         
         currentHealth -= damage;
-        Debug.Log($"Получен урон! Здоровье: {currentHealth}");
+        Debug.Log($"Здоровье: {currentHealth}");
         
         if (currentHealth <= 0)
         {
-            Debug.Log("Игрок умер!");
-            StartCoroutine(Die());
+            StartCoroutine(Die()); // Запускаем анимацию смерти
+        }
+    }
+    
+    // ВЫЗЫВАЕТСЯ ПРИ КАСАНИИ СТЕНЫ-ВРАГА
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("EnemyWall") && !isDead)
+        {
+            Debug.Log("Смерть от стены!");
+            StartCoroutine(Die()); // Запускаем анимацию смерти
+        }
+    }
+    
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("EnemyWall") && !isDead)
+        {
+            Debug.Log("Смерть от стены!");
+            StartCoroutine(Die()); // Запускаем анимацию смерти
         }
     }
     
     IEnumerator Die()
     {
+        if (isDead) yield break;
+        
         isDead = true;
         
-        Debug.Log("Начинаем процесс смерти...");
+        Debug.Log("Игрок умирает...");
         
-        // Отключаем управление и физику
-        if (rb != null) 
+        // Отключаем физику и коллайдер
+        if (rb != null)
         {
             rb.velocity = Vector2.zero;
             rb.simulated = false;
         }
         
-        if (playerCollider != null) 
+        if (playerCollider != null)
         {
             playerCollider.enabled = false;
         }
         
-        // Запоминаем начальную позицию и цвет
-        Vector3 startPos = transform.position;
+        // АНИМАЦИЯ СМЕРТИ (для пули и стены)
+        float elapsedTime = 0f;
         Vector3 startScale = transform.localScale;
         Color originalColor = spriteRenderer.color;
         
-        // АНИМАЦИЯ ИСЧЕЗНОВЕНИЯ (умирает ВЕСЬ игрок)
-        float elapsedTime = 0f;
-        
-        while (elapsedTime < disappearDuration)
+        while (elapsedTime < deathAnimationDuration)
         {
             // Плавно уменьшаем прозрачность
-            float alpha = Mathf.Lerp(1f, 0f, elapsedTime / disappearDuration);
+            float alpha = Mathf.Lerp(1f, 0f, elapsedTime / deathAnimationDuration);
             spriteRenderer.color = new Color(originalColor.r, originalColor.g, originalColor.b, alpha);
             
-            // НЕМНОГО УВЕЛИЧИВАЕМ (эффект взрыва)
-            float scale = 1 + (elapsedTime / disappearDuration) * 0.3f;
+            // Увеличиваем размер (эффект взрыва)
+            float scale = 1 + (elapsedTime / deathAnimationDuration) * 0.5f;
             transform.localScale = startScale * scale;
             
-            // Вращаем весь объект
+            // Вращаем
             transform.Rotate(0, 0, 720 * Time.deltaTime);
-            
-            // Немного поднимаем вверх
-            transform.position = startPos + Vector3.up * (elapsedTime * 0.5f);
             
             elapsedTime += Time.deltaTime;
             yield return null;
         }
         
-        // Полностью прозрачный и скрытый
+        // Полностью скрываем
         spriteRenderer.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0f);
         transform.localScale = startScale;
         
         // ЭФФЕКТ СМЕРТИ (партиклы)
         if (deathEffectPrefab != null)
         {
-            GameObject effect = Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
-            Destroy(effect, 1f);
-            Debug.Log("Эффект смерти создан");
+            Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
         }
         
         // ЗВУК СМЕРТИ
         if (deathSound != null && audioSource != null)
         {
             audioSource.PlayOneShot(deathSound);
-            Debug.Log("Звук смерти проигран");
         }
         
-        Debug.Log($"Возрождение через {respawnDelay} сек...");
-        
-        // Ждем перед возрождением
-        yield return new WaitForSeconds(respawnDelay);
-        
-        // ВОЗРОЖДЕНИЕ
+        // Запускаем возрождение
         StartCoroutine(Respawn());
     }
     
     IEnumerator Respawn()
     {
-        Debug.Log("Начинаем возрождение!");
+        Debug.Log($"Возрождение через {respawnDelay} сек...");
         
-        // Перемещаем на точку возрождения
+        yield return new WaitForSeconds(respawnDelay);
+        
+        Debug.Log("Возрождение!");
+        
+        // Перемещаем на точку респауна
         transform.position = respawnPoint.position;
         
-        // Сбрасываем вращение
+        // Сбрасываем вращение и размер
         transform.rotation = Quaternion.identity;
-        
-        // Восстанавливаем размер
         transform.localScale = Vector3.one;
         
         // Восстанавливаем здоровье
         currentHealth = maxHealth;
         
-        // Включаем коллайдер
-        if (playerCollider != null) 
+        // Включаем всё обратно
+        if (rb != null)
+        {
+            rb.simulated = true;
+        }
+        
+        if (playerCollider != null)
         {
             playerCollider.enabled = true;
         }
         
-        // Включаем физику
-        if (rb != null)
+        if (spriteRenderer != null)
         {
-            rb.simulated = true;
-            rb.velocity = Vector2.zero;
+            spriteRenderer.color = Color.white;
+            spriteRenderer.enabled = true;
         }
         
         // ЭФФЕКТ ВОЗРОЖДЕНИЯ
         if (respawnEffectPrefab != null)
         {
-            GameObject effect = Instantiate(respawnEffectPrefab, transform.position, Quaternion.identity);
-            Destroy(effect, 1f);
-            Debug.Log("Эффект возрождения создан");
+            Instantiate(respawnEffectPrefab, transform.position, Quaternion.identity);
         }
         
-        // ЗВУК РЕСПАУНА
+        // ЗВУК ВОЗРОЖДЕНИЯ
         if (respawnSound != null && audioSource != null)
         {
             audioSource.PlayOneShot(respawnSound);
-            Debug.Log("Звук респауна проигран");
         }
         
-        // Анимация появления
-        yield return StartCoroutine(SpawnAnimation());
+        // Маленькая анимация появления
+        StartCoroutine(SpawnAnimation());
     }
     
     IEnumerator SpawnAnimation()
     {
-        Debug.Log("Анимация появления");
-        
-        // Начинаем с невидимого
-        spriteRenderer.color = new Color(1, 1, 1, 0);
-        
-        // Быстрое появление с эффектом
         float elapsedTime = 0f;
         float spawnDuration = 0.3f;
         
-        // Начальный размер (маленький)
+        // Начинаем с невидимого
+        spriteRenderer.color = new Color(1, 1, 1, 0);
         transform.localScale = Vector3.zero;
         
         while (elapsedTime < spawnDuration)
         {
-            // Появляемся
             float t = elapsedTime / spawnDuration;
             
-            // Плавно увеличиваем прозрачность
+            // Плавно появляемся
             float alpha = Mathf.Lerp(0f, 1f, t);
             spriteRenderer.color = new Color(1, 1, 1, alpha);
             
-            // Плавно увеличиваем размер
+            // Увеличиваемся
             transform.localScale = Vector3.one * Mathf.Lerp(0f, 1f, t);
             
             // Вращаемся при появлении
@@ -237,10 +237,9 @@ public class PlayerController : MonoBehaviour
         // Финальные настройки
         spriteRenderer.color = Color.white;
         transform.localScale = Vector3.one;
-        transform.rotation = Quaternion.identity;
         
         isDead = false;
         
-        Debug.Log("Игрок готов к бою!");
+        Debug.Log("Игрок снова жив!");
     }
 }
