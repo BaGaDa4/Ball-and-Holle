@@ -201,7 +201,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: 0.000597994, w: 0.9999998}
   m_LocalPosition: {x: -0.03, y: 0.12, z: 0}
-  m_LocalScale: {x: 18.430733, y: 8.857819, z: 0.9054403}
+  m_LocalScale: {x: 17.61628, y: 8.466392, z: 0.86542886}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1407054812}
@@ -325,7 +325,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 1, g: 1, b: 1, a: 0}
+  m_BackGroundColor: {r: 0.6037736, g: 0.2249911, b: 0.47315893, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -489,7 +489,7 @@ GameObject:
   - component: {fileID: 551771526}
   m_Layer: 6
   m_Name: Square (3)
-  m_TagString: Untagged
+  m_TagString: Wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -618,6 +618,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Vrag 2
       objectReference: {fileID: 0}
+    - target: {fileID: 1639804325041098972, guid: d86432dc00c3581488f2d4f68707f14d, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 1639804325041098972, guid: d86432dc00c3581488f2d4f68707f14d, type: 3}
+      propertyPath: m_TagString
+      value: EnemyWall
+      objectReference: {fileID: 0}
     - target: {fileID: 3550877134395677598, guid: d86432dc00c3581488f2d4f68707f14d, type: 3}
       propertyPath: m_LocalPosition.x
       value: -1.4152085
@@ -696,14 +704,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 998917440}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.337, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: 0.9999969, w: -0.0024997701}
+  m_LocalPosition: {x: 0.015, y: 0.006, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1875887648}
   m_Father: {fileID: 1545131095}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 180.286}
 --- !u!1 &1332935816
 GameObject:
   m_ObjectHideFlags: 0
@@ -875,7 +883,7 @@ GameObject:
   - component: {fileID: 1620517421}
   m_Layer: 6
   m_Name: Square (4)
-  m_TagString: Untagged
+  m_TagString: Wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1193,11 +1201,8 @@ MonoBehaviour:
   firePoint: {fileID: 330082641}
   fireRate: 1
   bulletSpeed: 10
-  bulletDamage: 50
   pivotPoint: {fileID: 998917441}
-  muzzleFlashPrefab: {fileID: 0}
-  shootSound: {fileID: 0}
-  shootForce: 500
+  shootingRange: 20
 --- !u!212 &1875887650
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -1264,8 +1269,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 5
   maxHealth: 1
+  wallLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  enemyWallLayer:
+    serializedVersion: 2
+    m_Bits: 256
   deathEffectPrefab: {fileID: 0}
   deathSound: {fileID: 8300000, guid: fd71aaca10acb9e4b93c2cccbe94b529, type: 3}
+  deathAnimationDuration: 0.5
   respawnPoint: {fileID: 2090940871}
   respawnDelay: 2
   respawnEffectPrefab: {fileID: 0}
@@ -1314,7 +1326,7 @@ GameObject:
   - component: {fileID: 2123584313}
   m_Layer: 6
   m_Name: Square (2)
-  m_TagString: Untagged
+  m_TagString: Wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1442,6 +1454,10 @@ PrefabInstance:
     - target: {fileID: 2303533135134269439, guid: 0bf5b3e7fe5f2e6489475c305739b0aa, type: 3}
       propertyPath: m_Name
       value: Stena
+      objectReference: {fileID: 0}
+    - target: {fileID: 2303533135134269439, guid: 0bf5b3e7fe5f2e6489475c305739b0aa, type: 3}
+      propertyPath: m_TagString
+      value: Wall
       objectReference: {fileID: 0}
     - target: {fileID: 7243556714880715260, guid: 0bf5b3e7fe5f2e6489475c305739b0aa, type: 3}
       propertyPath: m_Color.b
@@ -1683,6 +1699,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 309484208643343400, guid: 441044db7af6aec4cb1e7f14ff367d45, type: 3}
+      propertyPath: m_Color.b
+      value: 0.4339623
+      objectReference: {fileID: 0}
+    - target: {fileID: 309484208643343400, guid: 441044db7af6aec4cb1e7f14ff367d45, type: 3}
+      propertyPath: m_Color.g
+      value: 0.4339623
+      objectReference: {fileID: 0}
+    - target: {fileID: 309484208643343400, guid: 441044db7af6aec4cb1e7f14ff367d45, type: 3}
+      propertyPath: m_Color.r
+      value: 0.4339623
+      objectReference: {fileID: 0}
     - target: {fileID: 640082654853301702, guid: 441044db7af6aec4cb1e7f14ff367d45, type: 3}
       propertyPath: m_LocalPosition.z
       value: -0.45
@@ -1730,6 +1758,18 @@ PrefabInstance:
     - target: {fileID: 1958545103750106946, guid: 441044db7af6aec4cb1e7f14ff367d45, type: 3}
       propertyPath: m_Name
       value: Lunka
+      objectReference: {fileID: 0}
+    - target: {fileID: 7302402290903657158, guid: 441044db7af6aec4cb1e7f14ff367d45, type: 3}
+      propertyPath: m_Color.b
+      value: 0.6981132
+      objectReference: {fileID: 0}
+    - target: {fileID: 7302402290903657158, guid: 441044db7af6aec4cb1e7f14ff367d45, type: 3}
+      propertyPath: m_Color.g
+      value: 0.6981132
+      objectReference: {fileID: 0}
+    - target: {fileID: 7302402290903657158, guid: 441044db7af6aec4cb1e7f14ff367d45, type: 3}
+      propertyPath: m_Color.r
+      value: 0.6981132
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
