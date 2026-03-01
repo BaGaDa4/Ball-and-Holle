@@ -9,49 +9,71 @@ public class Turret : MonoBehaviour
     public GameObject bulletPrefab;
     public Transform firePoint;
     public float fireRate = 1f;
-    public float bulletSpeed = 20f;        // УВЕЛИЧИЛ СКОРОСТЬ (было 5)
-    public float bulletDamage = 1f;
+    public float bulletSpeed = 10f;
     
     [Header("Поворот")]
     public Transform pivotPoint;
     
-    [Header("Эффекты выстрела")]
-    public GameObject muzzleFlashPrefab;    // Вспышка
-    public AudioClip shootSound;             // Звук
-    public float shootForce = 500f;          // СИЛА ВЫСТРЕЛА (для физики)
+    [Header("Дальность")]
+    public float shootingRange = 10f;
     
     private float nextFireTime;
-    private AudioSource audioSource;
+    private PlayerController playerController;
     
     void Start()
     {
         if (player == null)
         {
             GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-            if (playerObj != null) player = playerObj.transform;
+            if (playerObj != null)
+            {
+                player = playerObj.transform;
+                playerController = playerObj.GetComponent<PlayerController>();
+            }
+        }
+        else
+        {
+            playerController = player.GetComponent<PlayerController>();
         }
         
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null && shootSound != null)
+        if (pivotPoint == null)
         {
-            audioSource = gameObject.AddComponent<AudioSource>();
+            pivotPoint = transform;
+        }
+        
+        if (firePoint == null)
+        {
+            firePoint = transform;
         }
     }
     
     void Update()
     {
-        if (player == null || pivotPoint == null) return;
+        // Если нет игрока или игрок мертв/возрождается - ничего не делаем
+        if (player == null || playerController == null) return;
         
-        // Поворот на игрока
-        Vector2 direction = player.position - pivotPoint.position;
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        pivotPoint.rotation = Quaternion.Euler(0, 0, angle);
-        
-        // Стрельба
-        if (Time.time >= nextFireTime)
+        // Проверяем, жив ли игрок
+        if (!playerController.IsAlive())
         {
-            Shoot();
-            nextFireTime = Time.time + 1f / fireRate;
+            return; // Турель замирает
+        }
+        
+        // Проверяем дистанцию
+        float distance = Vector2.Distance(pivotPoint.position, player.position);
+        
+        if (distance <= shootingRange)
+        {
+            // Поворачиваемся к игроку
+            Vector2 direction = player.position - pivotPoint.position;
+            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            pivotPoint.rotation = Quaternion.Euler(0, 0, angle);
+            
+            // Стреляем
+            if (Time.time >= nextFireTime)
+            {
+                Shoot();
+                nextFireTime = Time.time + 1f / fireRate;
+            }
         }
     }
     
@@ -59,58 +81,20 @@ public class Turret : MonoBehaviour
     {
         if (bulletPrefab == null || firePoint == null) return;
         
-        // СОЗДАЕМ ПУЛЮ
         GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
         
-        // ДАЕМ ИМПУЛЬС (мощный толчок)
         Rigidbody2D rb = bullet.GetComponent<Rigidbody2D>();
         if (rb != null)
         {
-            // СПОСОБ 1: Прямая скорость (проще)
             rb.velocity = firePoint.right * bulletSpeed;
-            
-            // СПОСОБ 2: Сила (для физики)
-            // rb.AddForce(firePoint.right * shootForce);
-            
-            // СПОСОБ 3: Импульс (мгновенная сила)
-            // rb.AddForce(firePoint.right * shootForce, ForceMode2D.Impulse);
         }
         
-        // ЭФФЕКТ ВСПЫШКИ
-        if (muzzleFlashPrefab != null)
-        {
-            GameObject flash = Instantiate(muzzleFlashPrefab, firePoint.position, firePoint.rotation);
-            Destroy(flash, 0.1f);
-        }
-        
-        // ЗВУК ВЫСТРЕЛА
-        if (shootSound != null && audioSource != null)
-        {
-            audioSource.PlayOneShot(shootSound);
-        }
-        
-        // Уничтожаем пулю через 3 секунды
         Destroy(bullet, 3f);
-        
-        Debug.Log("БАХ! Мощный выстрел!");
     }
     
-    void OnDrawGizmos()
+    void OnDrawGizmosSelected()
     {
-        if (pivotPoint != null)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(pivotPoint.position, 0.2f);
-        }
-        
-        if (firePoint != null)
-        {
-            Gizmos.color = Color.blue;
-            Gizmos.DrawWireSphere(firePoint.position, 0.1f);
-            
-            // Рисуем направление выстрела
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawRay(firePoint.position, firePoint.right * 2f);
-        }
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(pivotPoint != null ? pivotPoint.position : transform.position, shootingRange);
     }
 }
