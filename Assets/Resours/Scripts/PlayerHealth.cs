@@ -11,19 +11,39 @@ public class PlayerController : MonoBehaviour
     private int currentHealth;
     
     [Header("Стены")]
-    public LayerMask wallLayer;              // Обычные стены (упор)
-    public LayerMask enemyWallLayer;         // Стены-враги (смерть)
+    public LayerMask wallLayer;
+    public LayerMask enemyWallLayer;
     
-    [Header("Смерть")]
+    [Header("Анимация смерти")]
+    public float deathAnimationDuration = 0.8f;
+    public AnimationCurve deathScaleCurve = AnimationCurve.EaseInOut(0, 1, 0.5f, 1.5f);
+    public AnimationCurve deathRotationCurve = AnimationCurve.EaseInOut(0, 0, 1, 720);
+    public Color deathStartColor = Color.red;
+    public Color deathEndColor = Color.clear;
+    public float deathShakeIntensity = 0.2f;
     public GameObject deathEffectPrefab;
     public AudioClip deathSound;
-    public float deathAnimationDuration = 0.5f;
+    
+    [Header("Анимация возрождения")]
+    public float respawnAnimationDuration = 0.6f;
+    public AnimationCurve respawnScaleCurve = AnimationCurve.EaseInOut(0, 0, 0.5f, 1.2f);
+    public AnimationCurve respawnAlphaCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
+    public Color respawnStartColor = Color.cyan;
+    public Color respawnEndColor = Color.white;
+    public float respawnRotationSpeed = 180f;
+    public GameObject respawnEffectPrefab;
+    public AudioClip respawnSound;
     
     [Header("Возрождение")]
     public Transform respawnPoint;
-    public float respawnDelay = 2f;
-    public GameObject respawnEffectPrefab;
-    public AudioClip respawnSound;
+    public float respawnDelay = 1.5f;
+    
+    // ================ ЩИТ (НЕУЯЗВИМОСТЬ) ================
+    [Header("Щит (неуязвимость)")]
+    public GameObject shieldObject;
+    public float invincibilityDuration = 2f;
+    public float invincibilityFlashSpeed = 0.1f;
+    // ===================================================
     
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
@@ -31,6 +51,11 @@ public class PlayerController : MonoBehaviour
     private AudioSource audioSource;
     private bool isDead = false;
     private bool isRespawning = false;
+    private bool isInvincible = false;
+    private bool isDying = false;
+    
+    private Color originalColor;
+    private bool isFlashing = false;
     
     void Start()
     {
@@ -42,6 +67,16 @@ public class PlayerController : MonoBehaviour
         if (audioSource == null)
         {
             audioSource = gameObject.AddComponent<AudioSource>();
+        }
+        
+        if (spriteRenderer != null)
+        {
+            originalColor = spriteRenderer.color;
+        }
+        
+        if (shieldObject != null)
+        {
+            shieldObject.SetActive(false);
         }
         
         currentHealth = maxHealth;
@@ -56,29 +91,23 @@ public class PlayerController : MonoBehaviour
     
     void Update()
     {
-        if (isDead || isRespawning) return;
+        if (isDead || isRespawning || isDying) return;
         
         if (Input.GetMouseButton(0))
         {
             Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mousePos.z = transform.position.z;
-            
-            // ДВИЖЕНИЕ С ПРОВЕРКОЙ СТЕН
             MoveWithWallCheck(mousePos);
         }
     }
     
-    // Движение с проверкой стен
     void MoveWithWallCheck(Vector3 targetPos)
     {
         Vector3 currentPos = transform.position;
         Vector3 direction = (targetPos - currentPos).normalized;
         float distance = Vector3.Distance(currentPos, targetPos);
-        
-        // Сколько можем пройти в этом кадре
         float moveDistance = Mathf.Min(moveSpeed * Time.deltaTime, distance);
         
-        // Проверяем, есть ли стена на пути
         RaycastHit2D hit = Physics2D.BoxCast(
             currentPos,
             playerCollider.bounds.size,
@@ -90,49 +119,26 @@ public class PlayerController : MonoBehaviour
         
         if (hit.collider != null)
         {
-            // Если стена на пути - упираемся
-            // Можем двигаться только до стены
             float safeDistance = Mathf.Max(0, hit.distance - 0.05f);
-            
             if (safeDistance > 0)
             {
                 transform.position = currentPos + direction * safeDistance;
             }
-            // Если safeDistance <= 0, не двигаемся вообще
         }
         else
         {
-            // Нет стены - двигаемся свободно
             transform.position = Vector3.MoveTowards(currentPos, targetPos, moveDistance);
         }
-        
-        // Дополнительно проверяем стены-враги
-        CheckForEnemyWalls();
     }
     
-    // Проверка стен-врагов
-    void CheckForEnemyWalls()
-    {
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 0.3f, enemyWallLayer);
-        
-        foreach (Collider2D hit in hits)
-        {
-            Debug.Log("Стена-враг обнаружена!");
-            StartCoroutine(Die());
-            return;
-        }
-    }
-    
-    // Для турели
     public bool IsAlive()
     {
-        return !isDead && !isRespawning;
+        return !isDead && !isRespawning && !isDying;
     }
     
-    // Урон от пули
     public void TakeDamage(int damage)
     {
-        if (isDead || isRespawning) return;
+        if (isDead || isRespawning || isInvincible || isDying) return;
         
         currentHealth -= damage;
         Debug.Log($"Здоровье: {currentHealth}");
@@ -141,56 +147,55 @@ public class PlayerController : MonoBehaviour
         {
             StartCoroutine(Die());
         }
-    }
-    
-    // Стена-враг (физика)
-    void OnCollisionEnter2D(Collision2D collision)
-    {
-        if (((1 << collision.gameObject.layer) & enemyWallLayer) != 0 && !isDead && !isRespawning)
+        else
         {
-            Debug.Log("Смерть от стены!");
-            StartCoroutine(Die());
+            StartCoroutine(FlashRed());
         }
     }
     
-    // Стена-враг (триггер)
+    IEnumerator FlashRed()
+    {
+        if (isFlashing) yield break;
+        isFlashing = true;
+        
+        spriteRenderer.color = Color.red;
+        yield return new WaitForSeconds(0.1f);
+        spriteRenderer.color = originalColor;
+        
+        isFlashing = false;
+    }
+    
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (((1 << other.gameObject.layer) & enemyWallLayer) != 0 && !isDead && !isRespawning)
+        if (isDead || isRespawning || isInvincible || isDying) return;
+        
+        if (((1 << other.gameObject.layer) & enemyWallLayer) != 0)
         {
             Debug.Log("Смерть от стены!");
-            StartCoroutine(Die());
-        }
-    }
-    
-    // Если застрял в стене-враге
-    void OnTriggerStay2D(Collider2D other)
-    {
-        if (((1 << other.gameObject.layer) & enemyWallLayer) != 0 && !isDead && !isRespawning)
-        {
-            Debug.Log("Игрок в стене-враге!");
-            StartCoroutine(Die());
-        }
-    }
-    
-    void OnCollisionStay2D(Collision2D collision)
-    {
-        if (((1 << collision.gameObject.layer) & enemyWallLayer) != 0 && !isDead && !isRespawning)
-        {
-            Debug.Log("Игрок в стене-враге!");
             StartCoroutine(Die());
         }
     }
     
     IEnumerator Die()
     {
-        if (isDead) yield break;
+        if (isDead || isDying) yield break;
         
+        isDying = true;
         isDead = true;
         
         Debug.Log("Игрок умирает...");
         
-        // Отключаем физику и коллайдер
+        // ЗВУК СМЕРТИ МГНОВЕННО
+        if (deathSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(deathSound);
+        }
+        
+        // Выключаем щит
+        if (shieldObject != null)
+            shieldObject.SetActive(false);
+        
+        // Отключаем физику
         if (rb != null)
         {
             rb.velocity = Vector2.zero;
@@ -202,41 +207,45 @@ public class PlayerController : MonoBehaviour
             playerCollider.enabled = false;
         }
         
-        // Анимация смерти
-        float elapsedTime = 0f;
+        // Запоминаем начальные значения
+        Vector3 startPos = transform.position;
         Vector3 startScale = transform.localScale;
-        Color originalColor = spriteRenderer.color;
+        
+        float elapsedTime = 0f;
         
         while (elapsedTime < deathAnimationDuration)
         {
-            float alpha = Mathf.Lerp(1f, 0f, elapsedTime / deathAnimationDuration);
-            spriteRenderer.color = new Color(originalColor.r, originalColor.g, originalColor.b, alpha);
+            float t = elapsedTime / deathAnimationDuration;
             
-            float scale = 1 + (elapsedTime / deathAnimationDuration) * 0.5f;
+            float scale = deathScaleCurve.Evaluate(t);
             transform.localScale = startScale * scale;
             
-            transform.Rotate(0, 0, 720 * Time.deltaTime);
+            float rotation = deathRotationCurve.Evaluate(t);
+            transform.rotation = Quaternion.Euler(0, 0, rotation);
+            
+            Color currentColor = Color.Lerp(deathStartColor, deathEndColor, t);
+            spriteRenderer.color = currentColor;
+            
+            float shakeX = Random.Range(-deathShakeIntensity, deathShakeIntensity) * (1 - t);
+            float shakeY = Random.Range(-deathShakeIntensity, deathShakeIntensity) * (1 - t);
+            transform.position = startPos + new Vector3(shakeX, shakeY, 0);
             
             elapsedTime += Time.deltaTime;
             yield return null;
         }
         
-        spriteRenderer.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0f);
+        spriteRenderer.color = deathEndColor;
         transform.localScale = startScale;
+        transform.position = startPos;
         
-        // Эффект смерти
         if (deathEffectPrefab != null)
         {
-            Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
+            GameObject effect = Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
+            Destroy(effect, 1f);
         }
         
-        // Звук смерти
-        if (deathSound != null && audioSource != null)
-        {
-            audioSource.PlayOneShot(deathSound);
-        }
+        yield return new WaitForSeconds(respawnDelay);
         
-        // Запускаем возрождение
         StartCoroutine(Respawn());
     }
     
@@ -244,23 +253,20 @@ public class PlayerController : MonoBehaviour
     {
         isRespawning = true;
         
-        Debug.Log($"Возрождение через {respawnDelay} сек...");
+        Debug.Log("Возрождение...");
         
-        yield return new WaitForSeconds(respawnDelay);
+        // ЗВУК ВОЗРОЖДЕНИЯ МГНОВЕННО
+        if (respawnSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(respawnSound);
+        }
         
-        Debug.Log("Возрождение!");
-        
-        // Перемещаем на точку спавна
         transform.position = respawnPoint.position;
+        transform.rotation = Quaternion.identity;
         
-        // Восстанавливаем здоровье
+        spriteRenderer.color = originalColor;
         currentHealth = maxHealth;
         
-        // Сбрасываем вращение и размер
-        transform.rotation = Quaternion.identity;
-        transform.localScale = Vector3.one;
-        
-        // Включаем всё обратно
         if (rb != null)
         {
             rb.simulated = true;
@@ -271,36 +277,80 @@ public class PlayerController : MonoBehaviour
             playerCollider.enabled = true;
         }
         
-        if (spriteRenderer != null)
+        float elapsedTime = 0f;
+        
+        while (elapsedTime < respawnAnimationDuration)
         {
-            spriteRenderer.color = Color.white;
-            spriteRenderer.enabled = true;
+            float t = elapsedTime / respawnAnimationDuration;
+            
+            float scale = respawnScaleCurve.Evaluate(t);
+            transform.localScale = Vector3.one * scale;
+            
+            float alpha = respawnAlphaCurve.Evaluate(t);
+            Color spawnColor = spriteRenderer.color;
+            spawnColor.a = alpha;
+            spriteRenderer.color = spawnColor;
+            
+            transform.Rotate(0, 0, -respawnRotationSpeed * Time.deltaTime);
+            
+            elapsedTime += Time.deltaTime;
+            yield return null;
         }
         
-        // Эффект возрождения
+        spriteRenderer.color = originalColor;
+        transform.localScale = Vector3.one;
+        transform.rotation = Quaternion.identity;
+        
         if (respawnEffectPrefab != null)
         {
-            Instantiate(respawnEffectPrefab, transform.position, Quaternion.identity);
+            GameObject effect = Instantiate(respawnEffectPrefab, transform.position, Quaternion.identity);
+            Destroy(effect, 1f);
         }
         
-        // Звук возрождения
-        if (respawnSound != null && audioSource != null)
-        {
-            audioSource.PlayOneShot(respawnSound);
-        }
+        // ВКЛЮЧАЕМ ЩИТ
+        StartCoroutine(InvincibilityWithShield());
         
-        yield return new WaitForSeconds(0.1f);
-        
+        // Сбрасываем флаги
         isRespawning = false;
         isDead = false;
+        isDying = false;
         
-        Debug.Log("Игрок снова жив!");
+        Debug.Log("Игрок готов!");
     }
     
-    // Визуализация
-    void OnDrawGizmosSelected()
+    IEnumerator InvincibilityWithShield()
     {
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(transform.position, 0.3f);
+        isInvincible = true;
+        
+        if (shieldObject != null)
+        {
+            shieldObject.SetActive(true);
+        }
+        
+        float elapsedTime = 0f;
+        
+        while (elapsedTime < invincibilityDuration)
+        {
+            spriteRenderer.enabled = !spriteRenderer.enabled;
+            
+            if (shieldObject != null)
+            {
+                shieldObject.SetActive(true);
+                shieldObject.transform.Rotate(0, 0, 360 * Time.deltaTime);
+            }
+            
+            yield return new WaitForSeconds(invincibilityFlashSpeed);
+            elapsedTime += invincibilityFlashSpeed;
+        }
+        
+        if (shieldObject != null)
+        {
+            shieldObject.SetActive(false);
+        }
+        
+        spriteRenderer.enabled = true;
+        spriteRenderer.color = originalColor;
+        
+        isInvincible = false;
     }
 }

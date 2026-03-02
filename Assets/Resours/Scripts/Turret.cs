@@ -37,38 +37,28 @@ public class Turret : MonoBehaviour
         }
         
         if (pivotPoint == null)
-        {
             pivotPoint = transform;
-        }
         
         if (firePoint == null)
-        {
             firePoint = transform;
-        }
     }
     
     void Update()
     {
-        // Если нет игрока или игрок мертв/возрождается - ничего не делаем
         if (player == null || playerController == null) return;
         
-        // Проверяем, жив ли игрок
+        // Используем IsAlive() для проверки
         if (!playerController.IsAlive())
-        {
-            return; // Турель замирает
-        }
+            return;
         
-        // Проверяем дистанцию
         float distance = Vector2.Distance(pivotPoint.position, player.position);
         
         if (distance <= shootingRange)
         {
-            // Поворачиваемся к игроку
             Vector2 direction = player.position - pivotPoint.position;
             float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
             pivotPoint.rotation = Quaternion.Euler(0, 0, angle);
             
-            // Стреляем
             if (Time.time >= nextFireTime)
             {
                 Shoot();
@@ -85,9 +75,7 @@ public class Turret : MonoBehaviour
         
         Rigidbody2D rb = bullet.GetComponent<Rigidbody2D>();
         if (rb != null)
-        {
             rb.velocity = firePoint.right * bulletSpeed;
-        }
         
         Destroy(bullet, 3f);
     }

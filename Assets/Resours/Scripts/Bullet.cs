@@ -3,6 +3,7 @@ using UnityEngine;
 public class Bullet : MonoBehaviour
 {
     public int damage = 1;
+    public GameObject hitEffect;
     
     void Start()
     {
@@ -11,7 +12,6 @@ public class Bullet : MonoBehaviour
     
     void OnTriggerEnter2D(Collider2D other)
     {
-        // Попадание в игрока
         if (other.CompareTag("Player"))
         {
             PlayerController player = other.GetComponent<PlayerController>();
@@ -20,13 +20,20 @@ public class Bullet : MonoBehaviour
                 player.TakeDamage(damage);
             }
             
-            // Уничтожаем пулю
+            if (hitEffect != null)
+            {
+                Instantiate(hitEffect, transform.position, Quaternion.identity);
+            }
+            
             Destroy(gameObject);
         }
         
-        // Попадание в стену (любую)
         if (other.CompareTag("Wall") || other.CompareTag("EnemyWall"))
         {
+            if (hitEffect != null)
+            {
+                Instantiate(hitEffect, transform.position, Quaternion.identity);
+            }
             Destroy(gameObject);
         }
     }

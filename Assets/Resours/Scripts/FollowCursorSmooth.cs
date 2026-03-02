@@ -5,8 +5,8 @@ using System.Collections;
 public class DragOnHoldWithCollision : MonoBehaviour
 {
     [Header("Настройки движения")]
-    public float smoothSpeed = 5f;           // Максимальная скорость
-    public float stopDistance = 0.2f;         // Дистанция остановки перед курсором
+    public float smoothSpeed = 5f;
+    public float stopDistance = 0.2f;
     public float zOffset = 10f;
     public KeyCode holdButton = KeyCode.Mouse0;
     
@@ -23,7 +23,6 @@ public class DragOnHoldWithCollision : MonoBehaviour
     public bool usePhysicsMovement = true;
 
     [Header("Лунки (переход на уровень)")]
-    public string nextSceneName = "Level2";
     public LayerMask holeLayer;
     public GameObject teleportEffect;
 
@@ -51,17 +50,14 @@ public class DragOnHoldWithCollision : MonoBehaviour
     private bool isHolding = false;
     private bool isTeleporting = false;
     private bool isDead = false;
+    private bool isRespawning = false;  // Важно! Флаг возрождения
     private Rigidbody2D rb;
     private Collider2D objectCollider;
     private SpriteRenderer spriteRenderer;
     private Vector3 startPosition;
     private AudioSource audioSource;
-    
-    // Для плавной остановки
     private Vector2 currentVelocity;
     private float maxSpeed = 5f;
-    private float acceleration = 15f;
-    private float deceleration = 20f;
 
     void Start()
     {
@@ -72,7 +68,6 @@ public class DragOnHoldWithCollision : MonoBehaviour
             return;
         }
 
-        // Получаем компоненты
         rb = GetComponent<Rigidbody2D>();
         objectCollider = GetComponent<Collider2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
@@ -83,12 +78,12 @@ public class DragOnHoldWithCollision : MonoBehaviour
             audioSource = gameObject.AddComponent<AudioSource>();
         }
 
-        // Запоминаем стартовую позицию
         startPosition = transform.position;
         maxSpeed = smoothSpeed;
 
-        // Настраиваем физику
         SetupPhysics();
+        
+        Debug.Log($"Игрок готов. Текущая сцена: {SceneManager.GetActiveScene().name}, Индекс: {SceneManager.GetActiveScene().buildIndex}");
     }
 
     void SetupPhysics()
@@ -99,7 +94,7 @@ public class DragOnHoldWithCollision : MonoBehaviour
             rb.gravityScale = 0f;
             rb.freezeRotation = true;
             rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-            rb.drag = 5f; // Добавляем сопротивление для плавной остановки
+            rb.drag = 5f;
         }
 
         if (objectCollider == null)
@@ -118,9 +113,9 @@ public class DragOnHoldWithCollision : MonoBehaviour
 
     void Update()
     {
-        if (isDead || isTeleporting) return;
+        // Если мертв ИЛИ возрождаемся - ничего не делаем
+        if (isDead || isTeleporting || isRespawning) return;
 
-        // Проверяем зажатие кнопки
         if (Input.GetKeyDown(holdButton))
         {
             isHolding = true;
@@ -134,7 +129,7 @@ public class DragOnHoldWithCollision : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (isDead || isTeleporting) return;
+        if (isDead || isTeleporting || isRespawning) return;
 
         if (isHolding)
         {
@@ -149,7 +144,6 @@ public class DragOnHoldWithCollision : MonoBehaviour
         }
         else
         {
-            // Плавная остановка когда не держим кнопку
             if (usePhysicsMovement && rb != null)
             {
                 rb.velocity = Vector2.Lerp(rb.velocity, Vector2.zero, 0.1f);
@@ -157,7 +151,6 @@ public class DragOnHoldWithCollision : MonoBehaviour
         }
     }
 
-    // Новая плавная физика движения
     void MoveWithPhysicsSmooth()
     {
         Vector3 mousePosition = Input.mousePosition;
@@ -174,13 +167,10 @@ public class DragOnHoldWithCollision : MonoBehaviour
         Vector2 currentPos = rb.position;
         float distance = Vector2.Distance(currentPos, targetPos);
         
-        // Если уже достаточно близко к курсору - тормозим
         if (distance < stopDistance)
         {
-            // Плавно тормозим
             rb.velocity = Vector2.Lerp(rb.velocity, Vector2.zero, 0.2f);
             
-            // Если почти остановились - просто ставим на место
             if (rb.velocity.magnitude < 0.05f)
             {
                 rb.velocity = Vector2.zero;
@@ -189,29 +179,20 @@ public class DragOnHoldWithCollision : MonoBehaviour
             return;
         }
         
-        // Вычисляем желаемое направление
         Vector2 direction = (targetPos - currentPos).normalized;
-        
-        // Желаемая скорость зависит от расстояния
-        float desiredSpeed = Mathf.Min(maxSpeed, distance * 3f); // Чем дальше, тем быстрее
-        
-        // Чем ближе к цели, тем сильнее тормозим
+        float desiredSpeed = Mathf.Min(maxSpeed, distance * 3f);
         float speedMultiplier = Mathf.Clamp01(distance / (stopDistance * 3f));
         desiredSpeed *= speedMultiplier;
         
         Vector2 desiredVelocity = direction * desiredSpeed;
-        
-        // Плавно меняем скорость
         rb.velocity = Vector2.Lerp(rb.velocity, desiredVelocity, 0.15f);
         
-        // Ограничиваем максимальную скорость
         if (rb.velocity.magnitude > maxSpeed)
         {
             rb.velocity = rb.velocity.normalized * maxSpeed;
         }
     }
 
-    // Новая плавная версия для Raycast движения
     void MoveWithRaycastsSmooth()
     {
         Vector3 mousePosition = Input.mousePosition;
@@ -230,19 +211,15 @@ public class DragOnHoldWithCollision : MonoBehaviour
         Vector3 currentPos = transform.position;
         float distance = Vector3.Distance(currentPos, targetPosition);
         
-        // Если достаточно близко - останавливаемся
         if (distance < stopDistance)
         {
-            // Плавно останавливаемся
             currentVelocity = Vector2.Lerp(currentVelocity, Vector2.zero, 0.2f);
             transform.position = Vector3.Lerp(currentPos, targetPosition, 0.1f);
             return;
         }
         
-        // Вычисляем направление
         Vector3 direction = (targetPosition - currentPos).normalized;
         
-        // Проверка на стены
         RaycastHit2D hit = Physics2D.BoxCast(
             currentPos,
             objectCollider.bounds.size,
@@ -254,50 +231,42 @@ public class DragOnHoldWithCollision : MonoBehaviour
         
         if (hit.collider != null)
         {
-            // Есть стена - останавливаемся перед ней
             float safeDistance = Mathf.Max(0, hit.distance - collisionOffset);
             Vector3 targetWallPos = currentPos + direction * safeDistance;
-            
-            // Плавно двигаемся к стене
             transform.position = Vector3.Lerp(currentPos, targetWallPos, 0.2f);
             currentVelocity = Vector2.zero;
         }
         else
         {
-            // Нет стен - плавно двигаемся к курсору
             float speed = Mathf.Min(maxSpeed, distance * 3f);
-            
-            // Плавно меняем скорость
-            currentVelocity = Vector2.Lerp(
-                currentVelocity, 
-                (Vector2)direction * speed, 
-                0.15f
-            );
-            
-            // Применяем движение
+            currentVelocity = Vector2.Lerp(currentVelocity, (Vector2)direction * speed, 0.15f);
             transform.position += (Vector3)currentVelocity * Time.fixedDeltaTime;
         }
     }
 
-    // Остальные методы без изменений...
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (isDead || isTeleporting) return;
+        // Важно: проверяем все флаги
+        if (isDead || isTeleporting || isRespawning) return;
 
+        // ПРОВЕРКА НА ЛУНКУ
         if (((1 << other.gameObject.layer) & holeLayer) != 0)
         {
+            Debug.Log($"ЛУНКА! Переход на следующий уровень");
             TeleportToNextScene();
         }
         
+        // ПРОВЕРКА НА ВРАГА
         if (((1 << other.gameObject.layer) & enemyWallLayer) != 0)
         {
+            Debug.Log("Враг!");
             Die();
         }
     }
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-        if (isDead || isTeleporting) return;
+        if (isDead || isTeleporting || isRespawning) return;
 
         if (((1 << collision.gameObject.layer) & enemyWallLayer) != 0)
         {
@@ -307,12 +276,13 @@ public class DragOnHoldWithCollision : MonoBehaviour
 
     void Die()
     {
-        if (isDead) return;
+        // Главная проверка - чтобы смерть вызвалась только 1 раз
+        if (isDead || isRespawning) return;
         
         isDead = true;
         isHolding = false;
         
-        Debug.Log("Игрок умер! Касание стены-врага");
+        Debug.Log("Игрок умер!");
         
         if (rb != null)
         {
@@ -374,6 +344,9 @@ public class DragOnHoldWithCollision : MonoBehaviour
 
     IEnumerator RespawnAnimation(Vector3 originalScale, Color originalColor)
     {
+        // Важно: ставим флаг возрождения
+        isRespawning = true;
+        
         Debug.Log("Возрождение...");
         
         transform.position = startPosition;
@@ -434,6 +407,8 @@ public class DragOnHoldWithCollision : MonoBehaviour
         }
         transform.localScale = originalScale;
         
+        // Снимаем флаги
+        isRespawning = false;
         isDead = false;
         
         Debug.Log("Игрок возродился!");
@@ -445,20 +420,27 @@ public class DragOnHoldWithCollision : MonoBehaviour
         
         isTeleporting = true;
         
-        Debug.Log($"Касание лунки! Переход на сцену: {nextSceneName}");
+        Debug.Log("Касание лунки! Переход на следующий уровень...");
         
         if (teleportEffect != null)
         {
             Instantiate(teleportEffect, transform.position, Quaternion.identity);
         }
         
-        if (!string.IsNullOrEmpty(nextSceneName))
+        int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
+        int nextSceneIndex = currentSceneIndex + 1;
+        
+        Debug.Log($"Текущий уровень: {currentSceneIndex}, Следующий: {nextSceneIndex}");
+        
+        if (nextSceneIndex < SceneManager.sceneCountInBuildSettings)
         {
-            SceneManager.LoadScene(nextSceneName);
+            Debug.Log($"Загружаем уровень {nextSceneIndex}");
+            SceneManager.LoadScene(nextSceneIndex);
         }
         else
         {
-            Debug.LogError("Имя следующей сцены не указано!");
+            Debug.Log("Это последний уровень! Загружаем первый...");
+            SceneManager.LoadScene(0);
         }
     }
 }

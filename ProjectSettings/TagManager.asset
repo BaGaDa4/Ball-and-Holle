@@ -13,13 +13,13 @@ TagManager:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - Holes
+  - Hole
   - Water
   - UI
   - Wall
   - Dolbaeb
   - EnemyWall
-  - 
+  - holeLayer
   - 
   - 
   - 
