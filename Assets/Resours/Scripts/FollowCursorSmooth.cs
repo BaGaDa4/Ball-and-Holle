@@ -50,7 +50,7 @@ public class DragOnHoldWithCollision : MonoBehaviour
     private bool isHolding = false;
     private bool isTeleporting = false;
     private bool isDead = false;
-    private bool isRespawning = false;  // Важно! Флаг возрождения
+    private bool isRespawning = false;
     private Rigidbody2D rb;
     private Collider2D objectCollider;
     private SpriteRenderer spriteRenderer;
@@ -83,6 +83,12 @@ public class DragOnHoldWithCollision : MonoBehaviour
 
         SetupPhysics();
         
+        // ПРОВЕРКА ПРЕФАБА
+        if (deathEffect == null)
+        {
+            Debug.LogWarning("Префаб эффекта смерти не назначен!");
+        }
+        
         Debug.Log($"Игрок готов. Текущая сцена: {SceneManager.GetActiveScene().name}, Индекс: {SceneManager.GetActiveScene().buildIndex}");
     }
 
@@ -113,7 +119,6 @@ public class DragOnHoldWithCollision : MonoBehaviour
 
     void Update()
     {
-        // Если мертв ИЛИ возрождаемся - ничего не делаем
         if (isDead || isTeleporting || isRespawning) return;
 
         if (Input.GetKeyDown(holdButton))
@@ -246,17 +251,14 @@ public class DragOnHoldWithCollision : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        // Важно: проверяем все флаги
         if (isDead || isTeleporting || isRespawning) return;
 
-        // ПРОВЕРКА НА ЛУНКУ
         if (((1 << other.gameObject.layer) & holeLayer) != 0)
         {
             Debug.Log($"ЛУНКА! Переход на следующий уровень");
             TeleportToNextScene();
         }
         
-        // ПРОВЕРКА НА ВРАГА
         if (((1 << other.gameObject.layer) & enemyWallLayer) != 0)
         {
             Debug.Log("Враг!");
@@ -276,13 +278,30 @@ public class DragOnHoldWithCollision : MonoBehaviour
 
     void Die()
     {
-        // Главная проверка - чтобы смерть вызвалась только 1 раз
         if (isDead || isRespawning) return;
         
         isDead = true;
         isHolding = false;
         
         Debug.Log("Игрок умер!");
+        
+        // ЗВУК СМЕРТИ МГНОВЕННО
+        if (deathSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(deathSound);
+        }
+        
+        // ЭФФЕКТ СМЕРТИ МГНОВЕННО
+        if (deathEffect != null)
+        {
+            GameObject effect = Instantiate(deathEffect, transform.position, Quaternion.identity);
+            Destroy(effect, 2f);
+            Debug.Log("Эффект смерти создан!");
+        }
+        else
+        {
+            Debug.LogWarning("deathEffect не назначен!");
+        }
         
         if (rb != null)
         {
@@ -303,16 +322,6 @@ public class DragOnHoldWithCollision : MonoBehaviour
         float elapsedTime = 0f;
         Vector3 originalScale = transform.localScale;
         Color originalColor = spriteRenderer != null ? spriteRenderer.color : Color.white;
-        
-        if (deathEffect != null)
-        {
-            Instantiate(deathEffect, transform.position, Quaternion.identity);
-        }
-        
-        if (deathSound != null && audioSource != null)
-        {
-            audioSource.PlayOneShot(deathSound);
-        }
         
         while (elapsedTime < deathAnimationDuration)
         {
@@ -344,10 +353,15 @@ public class DragOnHoldWithCollision : MonoBehaviour
 
     IEnumerator RespawnAnimation(Vector3 originalScale, Color originalColor)
     {
-        // Важно: ставим флаг возрождения
         isRespawning = true;
         
         Debug.Log("Возрождение...");
+        
+        // ЗВУК ВОЗРОЖДЕНИЯ МГНОВЕННО
+        if (respawnSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(respawnSound);
+        }
         
         transform.position = startPosition;
         
@@ -368,16 +382,6 @@ public class DragOnHoldWithCollision : MonoBehaviour
         if (objectCollider != null)
         {
             objectCollider.enabled = true;
-        }
-        
-        if (respawnSound != null && audioSource != null)
-        {
-            audioSource.PlayOneShot(respawnSound);
-        }
-        
-        if (deathEffect != null)
-        {
-            Instantiate(deathEffect, transform.position, Quaternion.identity);
         }
         
         float elapsedTime = 0f;
@@ -407,7 +411,6 @@ public class DragOnHoldWithCollision : MonoBehaviour
         }
         transform.localScale = originalScale;
         
-        // Снимаем флаги
         isRespawning = false;
         isDead = false;
         

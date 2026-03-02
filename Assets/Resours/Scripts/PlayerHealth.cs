@@ -21,7 +21,7 @@ public class PlayerController : MonoBehaviour
     public Color deathStartColor = Color.red;
     public Color deathEndColor = Color.clear;
     public float deathShakeIntensity = 0.2f;
-    public GameObject deathEffectPrefab;
+    public GameObject deathEffectPrefab;  // Префаб эффекта смерти
     public AudioClip deathSound;
     
     [Header("Анимация возрождения")]
@@ -86,6 +86,22 @@ public class PlayerController : MonoBehaviour
             GameObject spawnObj = new GameObject("SpawnPoint");
             spawnObj.transform.position = transform.position;
             respawnPoint = spawnObj.transform;
+        }
+        
+        // ОТКЛЮЧАЕМ ПАРТИКЛЫ В ПРЕФАБЕ (чтобы не спавнились в начале)
+        if (deathEffectPrefab != null)
+        {
+            // Проверяем, есть ли у префаба ParticleSystem и отключаем PlayOnAwake
+            ParticleSystem ps = deathEffectPrefab.GetComponent<ParticleSystem>();
+            if (ps != null)
+            {
+                // Это не отключает в префабе, но гарантирует что при Instantiate они не будут играть
+                Debug.Log("Префаб эффекта смерти загружен");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Префаб эффекта смерти не назначен!");
         }
     }
     
@@ -191,6 +207,31 @@ public class PlayerController : MonoBehaviour
             audioSource.PlayOneShot(deathSound);
         }
         
+        // ЭФФЕКТ СМЕРТИ МГНОВЕННО (партиклы)
+        if (deathEffectPrefab != null)
+        {
+            // Создаем эффект на позиции игрока
+            GameObject effect = Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
+            
+            // ОТКЛЮЧАЕМ PLAY ON AWAKE для этого экземпляра
+            ParticleSystem ps = effect.GetComponent<ParticleSystem>();
+            if (ps != null)
+            {
+                var main = ps.main;
+                main.playOnAwake = false; // Отключаем PlayOnAwake
+                ps.Play(); // Запускаем принудительно
+            }
+            
+            // Уничтожаем через 2 секунды
+            Destroy(effect, 2f);
+            
+            Debug.Log("Эффект смерти создан и запущен!");
+        }
+        else
+        {
+            Debug.LogWarning("deathEffectPrefab не назначен!");
+        }
+        
         // Выключаем щит
         if (shieldObject != null)
             shieldObject.SetActive(false);
@@ -213,6 +254,7 @@ public class PlayerController : MonoBehaviour
         
         float elapsedTime = 0f;
         
+        // Анимация смерти (сам спрайт игрока)
         while (elapsedTime < deathAnimationDuration)
         {
             float t = elapsedTime / deathAnimationDuration;
@@ -237,12 +279,6 @@ public class PlayerController : MonoBehaviour
         spriteRenderer.color = deathEndColor;
         transform.localScale = startScale;
         transform.position = startPos;
-        
-        if (deathEffectPrefab != null)
-        {
-            GameObject effect = Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
-            Destroy(effect, 1f);
-        }
         
         yield return new WaitForSeconds(respawnDelay);
         
@@ -301,10 +337,21 @@ public class PlayerController : MonoBehaviour
         transform.localScale = Vector3.one;
         transform.rotation = Quaternion.identity;
         
+        // ЭФФЕКТ ВОЗРОЖДЕНИЯ
         if (respawnEffectPrefab != null)
         {
             GameObject effect = Instantiate(respawnEffectPrefab, transform.position, Quaternion.identity);
-            Destroy(effect, 1f);
+            
+            // Отключаем PlayOnAwake для эффекта возрождения
+            ParticleSystem ps = effect.GetComponent<ParticleSystem>();
+            if (ps != null)
+            {
+                var main = ps.main;
+                main.playOnAwake = false;
+                ps.Play();
+            }
+            
+            Destroy(effect, 2f);
         }
         
         // ВКЛЮЧАЕМ ЩИТ
