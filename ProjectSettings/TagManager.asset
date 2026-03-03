@@ -9,6 +9,7 @@ TagManager:
   - Turret
   - EnemyWall
   - Wall
+  - Laser
   layers:
   - Default
   - TransparentFX
@@ -21,7 +22,7 @@ TagManager:
   - EnemyWall
   - holeLayer
   - Player
-  - 
+  - Laser
   - 
   - 
   - 

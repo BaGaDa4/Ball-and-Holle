@@ -860,7 +860,7 @@ MonoBehaviour:
   blendDistance: 0
   weight: 1
   sharedProfile: {fileID: 11400000, guid: 4a7b67da4b21f3c4c87828bc7854b174, type: 2}
---- !u!1001 &1954352022
+--- !u!1001 &2081651619
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -870,11 +870,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4339776258647449577, guid: a6c61c5345db9b64cae2130a8b9536b5, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -7.2264724
+      value: -7.2384605
       objectReference: {fileID: 0}
     - target: {fileID: 4339776258647449577, guid: a6c61c5345db9b64cae2130a8b9536b5, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.08658993
+      value: 0.013136625
       objectReference: {fileID: 0}
     - target: {fileID: 4339776258647449577, guid: a6c61c5345db9b64cae2130a8b9536b5, type: 3}
       propertyPath: m_LocalPosition.z
@@ -911,6 +911,10 @@ PrefabInstance:
     - target: {fileID: 4481683594879182163, guid: a6c61c5345db9b64cae2130a8b9536b5, type: 3}
       propertyPath: m_Name
       value: Player (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 6276566021882022552, guid: a6c61c5345db9b64cae2130a8b9536b5, type: 3}
+      propertyPath: m_Enabled
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1065,4 +1069,4 @@ SceneRoots:
   - {fileID: 461676574}
   - {fileID: 1158527434}
   - {fileID: 118403071}
-  - {fileID: 1954352022}
+  - {fileID: 2081651619}
