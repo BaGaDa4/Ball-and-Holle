@@ -10,10 +10,16 @@ public class LaserPuska : MonoBehaviour
     public float maxLaserDistance = 20f;
     public LayerMask wallLayer;   // СЮДА ТОЛЬКО СТЕНЫ
     public LineRenderer lineRenderer;
+    public AudioClip laserSound;           // Звук лазера
+    public float laserSoundVolume = 0.5f;  // Громкость звука
 
     [Header("Игрок")]
     public LayerMask playerLayer;  // СЮДА ТОЛЬКО ИГРОКА
-    public float damage = 100f;    // Количество урона или "смерть"
+
+    private PlayerController playerController;
+    private GameObject playerObject;
+    private AudioSource audioSource;
+    private bool isPlayerHit = false;      // Флаг для отслеживания попадания
 
     void Start()
     {
@@ -24,12 +30,36 @@ public class LaserPuska : MonoBehaviour
             lineRenderer = GetComponent<LineRenderer>();
 
         lineRenderer.positionCount = 2;
+        
+        // Добавляем AudioSource если его нет
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null && laserSound != null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.loop = true;        // Зацикливаем звук
+            audioSource.volume = laserSoundVolume;
+            audioSource.clip = laserSound;
+        }
+        
+        // Находим игрока
+        FindPlayer();
+    }
+
+    void FindPlayer()
+    {
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj != null)
+        {
+            playerObject = playerObj;
+            playerController = playerObj.GetComponent<PlayerController>();
+        }
     }
 
     void Update()
     {
         RotateTurret();
         DrawLaser();
+        HandleLaserSound();
     }
 
     void RotateTurret()
@@ -59,14 +89,29 @@ public class LaserPuska : MonoBehaviour
             laserEnd = wallHit.point;
         }
 
-        // Если игрок попал в луч и находится ближе, чем стена — убиваем
+        // Проверяем игрока
+        bool playerInLaser = false;
+        
         if (playerHit.collider != null)
         {
             if (wallHit.collider == null || playerHit.distance < wallHit.distance)
             {
                 laserEnd = playerHit.point;
-                KillPlayer(playerHit.collider.gameObject);
+                playerInLaser = true;
+                
+                // Убиваем игрока только один раз при попадании
+                if (!isPlayerHit)
+                {
+                    KillPlayer(playerHit.collider.gameObject);
+                    isPlayerHit = true;
+                }
             }
+        }
+        
+        // Если игрока нет в лазере, сбрасываем флаг
+        if (!playerInLaser)
+        {
+            isPlayerHit = false;
         }
 
         lineRenderer.SetPosition(1, laserEnd);
@@ -74,10 +119,39 @@ public class LaserPuska : MonoBehaviour
 
     void KillPlayer(GameObject player)
     {
-        // Простейший вариант — просто уничтожаем объект
-        Destroy(player);
+        if (playerController == null)
+        {
+            // Пробуем найти еще раз
+            FindPlayer();
+            if (playerController == null) return;
+        }
 
-        // Если есть скрипт здоровья:
-        // player.GetComponent<PlayerHealth>()?.TakeDamage(damage);
+        // Проверяем, жив ли игрок и не в процессе возрождения
+        if (playerController != null && playerController.IsAlive())
+        {
+            Debug.Log("Лазер убил игрока!");
+            playerController.TakeDamage(999); // Большой урон для мгновенной смерти
+        }
+    }
+
+    void HandleLaserSound()
+    {
+        if (audioSource == null || laserSound == null) return;
+
+        // Включаем звук, если лазер активен (всегда работает)
+        if (!audioSource.isPlaying)
+        {
+            audioSource.Play();
+        }
+    }
+
+    // Визуализация для отладки
+    void OnDrawGizmosSelected()
+    {
+        if (pivotPoint != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawRay(pivotPoint.position, pivotPoint.right * maxLaserDistance);
+        }
     }
 }
