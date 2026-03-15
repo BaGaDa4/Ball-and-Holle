@@ -122,7 +122,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
-<<<<<<< HEAD
 --- !u!1 &19201937
 GameObject:
   m_ObjectHideFlags: 0
@@ -542,8 +541,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 134944914}
   m_CullTransparentMesh: 1
-=======
->>>>>>> origin/123
 --- !u!1 &144821624
 GameObject:
   m_ObjectHideFlags: 0
@@ -556,10 +553,7 @@ GameObject:
   - component: {fileID: 144821627}
   - component: {fileID: 144821626}
   - component: {fileID: 144821625}
-<<<<<<< HEAD
   - component: {fileID: 144821629}
-=======
->>>>>>> origin/123
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -646,13 +640,9 @@ RectTransform:
   - {fileID: 1228411800}
   - {fileID: 448855157}
   - {fileID: 1781243092}
-<<<<<<< HEAD
   - {fileID: 345254177}
   - {fileID: 867635382}
   - {fileID: 2060306996}
-=======
-  - {fileID: 867635382}
->>>>>>> origin/123
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -660,7 +650,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
-<<<<<<< HEAD
 --- !u!114 &144821629
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1158,8 +1147,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 345254176}
   m_CullTransparentMesh: 1
-=======
->>>>>>> origin/123
 --- !u!1 &448855156
 GameObject:
   m_ObjectHideFlags: 0
@@ -1196,13 +1183,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-<<<<<<< HEAD
-  m_AnchoredPosition: {x: 174.79999, y: -78.46637}
-  m_SizeDelta: {x: 160, y: 32.5194}
-=======
   m_AnchoredPosition: {x: 174.8, y: -55.3}
   m_SizeDelta: {x: 160, y: 30}
->>>>>>> origin/123
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &448855158
 MonoBehaviour:
@@ -1261,11 +1243,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-<<<<<<< HEAD
-  m_Color: {r: 0, g: 0, b: 0, a: 0.2627451}
-=======
   m_Color: {r: 1, g: 1, b: 1, a: 0}
->>>>>>> origin/123
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1290,7 +1268,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 448855156}
   m_CullTransparentMesh: 1
-<<<<<<< HEAD
 --- !u!1 &474562629
 GameObject:
   m_ObjectHideFlags: 0
@@ -1694,8 +1671,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 646460666}
   m_CullTransparentMesh: 1
-=======
->>>>>>> origin/123
 --- !u!1 &669543187
 GameObject:
   m_ObjectHideFlags: 0
@@ -1886,7 +1861,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 697846768}
   m_CullTransparentMesh: 1
-<<<<<<< HEAD
 --- !u!1 &843640349
 GameObject:
   m_ObjectHideFlags: 0
@@ -1962,8 +1936,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 843640349}
   m_CullTransparentMesh: 1
-=======
->>>>>>> origin/123
 --- !u!1 &867635381
 GameObject:
   m_ObjectHideFlags: 0
@@ -2059,7 +2031,6 @@ MonoBehaviour:
   m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
   m_EffectDistance: {x: 2, y: 2}
   m_UseGraphicAlpha: 1
-<<<<<<< HEAD
 --- !u!1 &896536684
 GameObject:
   m_ObjectHideFlags: 0
@@ -2096,8 +2067,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: -20, y: -20}
   m_Pivot: {x: 0.5, y: 0.5}
-=======
->>>>>>> origin/123
 --- !u!1 &947080235
 GameObject:
   m_ObjectHideFlags: 0
@@ -2173,7 +2142,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 947080235}
   m_CullTransparentMesh: 1
-<<<<<<< HEAD
 --- !u!1 &986883570
 GameObject:
   m_ObjectHideFlags: 0
@@ -2754,8 +2722,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1109874459}
   m_CullTransparentMesh: 1
-=======
->>>>>>> origin/123
 --- !u!1 &1207658039
 GameObject:
   m_ObjectHideFlags: 0
@@ -2947,11 +2913,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-<<<<<<< HEAD
   m_Color: {r: 0, g: 0, b: 0, a: 0.2627451}
-=======
   m_Color: {r: 1, g: 1, b: 1, a: 0}
->>>>>>> origin/123
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -3090,7 +3053,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-<<<<<<< HEAD
 --- !u!1 &1463404123
 GameObject:
   m_ObjectHideFlags: 0
@@ -3460,8 +3422,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1610626757}
   m_CullTransparentMesh: 1
-=======
->>>>>>> origin/123
 --- !u!1 &1666852922
 GameObject:
   m_ObjectHideFlags: 0
@@ -3599,7 +3559,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-<<<<<<< HEAD
 --- !u!1 &1725917121
 GameObject:
   m_ObjectHideFlags: 0
@@ -3751,8 +3710,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1747568357}
   m_CullTransparentMesh: 1
-=======
->>>>>>> origin/123
 --- !u!1 &1781243091
 GameObject:
   m_ObjectHideFlags: 0
@@ -3789,11 +3746,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-<<<<<<< HEAD
   m_AnchoredPosition: {x: 174.8, y: -156.5}
-=======
   m_AnchoredPosition: {x: 174.8, y: -114.2}
->>>>>>> origin/123
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1781243093
@@ -3853,11 +3807,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-<<<<<<< HEAD
   m_Color: {r: 0, g: 0, b: 0, a: 0.2627451}
-=======
   m_Color: {r: 1, g: 1, b: 1, a: 0}
->>>>>>> origin/123
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -3882,7 +3833,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1781243091}
   m_CullTransparentMesh: 1
-<<<<<<< HEAD
 --- !u!1 &1799424029
 GameObject:
   m_ObjectHideFlags: 0
@@ -4729,8 +4679,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2137617033}
   m_CullTransparentMesh: 1
-=======
->>>>>>> origin/123
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
