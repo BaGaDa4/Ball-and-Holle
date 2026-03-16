@@ -37,16 +37,12 @@ public class CompleteMenu : MonoBehaviour
     public Slider sfxVolumeSlider;
     public Toggle soundToggle;
     public Text volumeValueText;
-    public Text masterVolumeText;
-    public Text musicVolumeText;
-    public Text sfxVolumeText;
     
     [Header("Настройки пост-процессинга")]
     public Volume globalVolume;
     public Toggle postProcessingToggle;
     public Toggle bloomToggle;
     public Toggle motionBlurToggle;
-    public Text postProcessingStatusText;
     
     [Header("Доступные разрешения")]
     public Vector2Int[] resolutions = new Vector2Int[]
@@ -76,6 +72,8 @@ public class CompleteMenu : MonoBehaviour
     private bool isAnimating = false;
     private bool canPressEscape = true;
     
+    private Dictionary<Button, Coroutine> activeAnimations = new Dictionary<Button, Coroutine>();
+    
     private float masterVolume = 1f;
     private float musicVolume = 1f;
     private float sfxVolume = 1f;
@@ -83,155 +81,22 @@ public class CompleteMenu : MonoBehaviour
     
     void Start()
     {
-        // Курсор всегда видим
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
         
-        // Сохраняем оригинальные размеры кнопок
         SaveOriginalScales();
-        
-        // Настраиваем кнопки
         SetupButtons();
-        
-        // Настраиваем выпадающие списки
         SetupResolutionDropdown();
         SetupScreenModeDropdown();
-        
-        // Настраиваем звук
         SetupAudioSettings();
-        
-        // Настраиваем пост-процессинг
         SetupPostProcessing();
-        
-        // Загружаем сохраненные настройки
         LoadSettings();
         
-        // Применяем настройки
-        ApplyAudioSettings();
-        ApplyPostProcessingSettings();
-        
-        // Начальное состояние
-        if (mainPanel != null)
-            mainPanel.SetActive(true);
-            
-        if (settingsPanel != null)
-            settingsPanel.SetActive(false);
+        if (mainPanel != null) mainPanel.SetActive(true);
+        if (settingsPanel != null) settingsPanel.SetActive(false);
     }
     
-    void SetupPostProcessing()
-    {
-        // Находим Volume если не назначен
-        if (globalVolume == null)
-            globalVolume = FindObjectOfType<Volume>();
-            
-        if (globalVolume != null && globalVolume.profile != null)
-        {
-            // Получаем эффекты из профиля
-            globalVolume.profile.TryGet(out bloom);
-            globalVolume.profile.TryGet(out motionBlur);
-            
-            Debug.Log($"Post Processing: Bloom={(bloom != null)}, MotionBlur={(motionBlur != null)}");
-        }
-        else
-        {
-            Debug.LogWarning("Global Volume или его профиль не найдены!");
-        }
-        
-        // Настраиваем UI
-        if (postProcessingToggle != null)
-            postProcessingToggle.onValueChanged.AddListener(SetPostProcessing);
-            
-        if (bloomToggle != null)
-            bloomToggle.onValueChanged.AddListener(SetBloom);
-            
-        if (motionBlurToggle != null)
-            motionBlurToggle.onValueChanged.AddListener(SetMotionBlur);
-    }
-    
-    void ApplyPostProcessingSettings()
-    {
-        if (globalVolume != null)
-        {
-            bool ppEnabled = PlayerPrefs.GetInt("PostProcessingEnabled", 1) == 1;
-            bool bloomEnabled = PlayerPrefs.GetInt("BloomEnabled", 1) == 1;
-            bool motionBlurEnabled = PlayerPrefs.GetInt("MotionBlurEnabled", 1) == 1;
-            
-            // Применяем к UI
-            if (postProcessingToggle != null) postProcessingToggle.isOn = ppEnabled;
-            if (bloomToggle != null) bloomToggle.isOn = bloomEnabled;
-            if (motionBlurToggle != null) motionBlurToggle.isOn = motionBlurEnabled;
-            
-            // Включаем/выключаем Volume
-            globalVolume.enabled = ppEnabled;
-            
-            // Включаем/выключаем эффекты
-            if (bloom != null) bloom.active = bloomEnabled && ppEnabled;
-            if (motionBlur != null) motionBlur.active = motionBlurEnabled && ppEnabled;
-            
-            UpdatePostProcessingStatus();
-        }
-    }
-    
-    public void SetPostProcessing(bool enabled)
-    {
-        if (globalVolume != null)
-        {
-            globalVolume.enabled = enabled;
-            PlayerPrefs.SetInt("PostProcessingEnabled", enabled ? 1 : 0);
-            PlayerPrefs.Save();
-            
-            // Обновляем статус эффектов
-            if (bloom != null && bloomToggle != null)
-                bloom.active = enabled && bloomToggle.isOn;
-                
-            if (motionBlur != null && motionBlurToggle != null)
-                motionBlur.active = enabled && motionBlurToggle.isOn;
-                
-            UpdatePostProcessingStatus();
-            Debug.Log($"Пост-процессинг {(enabled ? "включен" : "выключен")}");
-        }
-    }
-    
-    public void SetBloom(bool enabled)
-    {
-        if (bloom != null)
-        {
-            // Включаем только если включен общий пост-процессинг
-            bool finalEnabled = enabled && (globalVolume != null && globalVolume.enabled);
-            bloom.active = finalEnabled;
-            
-            PlayerPrefs.SetInt("BloomEnabled", enabled ? 1 : 0);
-            PlayerPrefs.Save();
-            
-            Debug.Log($"Bloom {(enabled ? "включен" : "выключен")}" + 
-                     (finalEnabled != enabled ? " (но пост-процессинг выключен)" : ""));
-        }
-    }
-    
-    public void SetMotionBlur(bool enabled)
-    {
-        if (motionBlur != null)
-        {
-            // Включаем только если включен общий пост-процессинг
-            bool finalEnabled = enabled && (globalVolume != null && globalVolume.enabled);
-            motionBlur.active = finalEnabled;
-            
-            PlayerPrefs.SetInt("MotionBlurEnabled", enabled ? 1 : 0);
-            PlayerPrefs.Save();
-            
-            Debug.Log($"Motion Blur {(enabled ? "включен" : "выключен")}" + 
-                     (finalEnabled != enabled ? " (но пост-процессинг выключен)" : ""));
-        }
-    }
-    
-    void UpdatePostProcessingStatus()
-    {
-        if (postProcessingStatusText != null)
-        {
-            string status = globalVolume != null && globalVolume.enabled ? "Вкл" : "Выкл";
-            postProcessingStatusText.text = $"Пост-процессинг: {status}";
-        }
-    }
+    // ========== МЕТОДЫ ДЛЯ ЭКРАНА ==========
     
     void SetupResolutionDropdown()
     {
@@ -281,6 +146,38 @@ public class CompleteMenu : MonoBehaviour
         screenModeDropdown.onValueChanged.AddListener(SetScreenMode);
     }
     
+    public void SetResolution(int index)
+    {
+        if (index < 0 || index >= resolutions.Length) return;
+        
+        Vector2Int res = resolutions[index];
+        Screen.SetResolution(res.x, res.y, Screen.fullScreen);
+        Debug.Log($"Разрешение: {res.x} x {res.y}");
+    }
+    
+    public void SetScreenMode(int index)
+    {
+        switch (index)
+        {
+            case 0:
+                Screen.fullScreenMode = FullScreenMode.Windowed;
+                break;
+            case 1:
+                Screen.fullScreenMode = FullScreenMode.ExclusiveFullScreen;
+                break;
+            case 2:
+                Screen.fullScreenMode = FullScreenMode.FullScreenWindow;
+                break;
+        }
+    }
+    
+    public void SetFullscreen(bool isFullscreen)
+    {
+        Screen.fullScreen = isFullscreen;
+    }
+    
+    // ========== МЕТОДЫ ДЛЯ ЗВУКА ==========
+    
     void SetupAudioSettings()
     {
         if (masterVolumeSlider != null)
@@ -310,30 +207,33 @@ public class CompleteMenu : MonoBehaviour
         }
     }
     
-    void LoadSettings()
+    public void SetMasterVolume(float value)
     {
-        // Загрузка настроек громкости
-        masterVolume = PlayerPrefs.GetFloat("MasterVolume", 1f);
-        musicVolume = PlayerPrefs.GetFloat("MusicVolume", 1f);
-        sfxVolume = PlayerPrefs.GetFloat("SFXVolume", 1f);
-        isSoundOn = PlayerPrefs.GetInt("SoundOn", 1) == 1;
-        
-        // Применяем настройки к UI
-        if (masterVolumeSlider != null) masterVolumeSlider.value = masterVolume;
-        if (musicVolumeSlider != null) musicVolumeSlider.value = musicVolume;
-        if (sfxVolumeSlider != null) sfxVolumeSlider.value = sfxVolume;
-        if (soundToggle != null) soundToggle.isOn = isSoundOn;
-        
-        UpdateVolumeTexts();
+        masterVolume = value;
+        ApplyAudioSettings();
+        SaveSettings();
     }
     
-    void SaveSettings()
+    public void SetMusicVolume(float value)
     {
-        PlayerPrefs.SetFloat("MasterVolume", masterVolume);
-        PlayerPrefs.SetFloat("MusicVolume", musicVolume);
-        PlayerPrefs.SetFloat("SFXVolume", sfxVolume);
-        PlayerPrefs.SetInt("SoundOn", isSoundOn ? 1 : 0);
-        PlayerPrefs.Save();
+        musicVolume = value;
+        ApplyAudioSettings();
+        SaveSettings();
+    }
+    
+    public void SetSFXVolume(float value)
+    {
+        sfxVolume = value;
+        ApplyAudioSettings();
+        SaveSettings();
+    }
+    
+    public void ToggleSound(bool isOn)
+    {
+        isSoundOn = isOn;
+        ApplyAudioSettings();
+        SaveSettings();
+        Debug.Log($"Звук {(isOn ? "включен" : "выключен")}");
     }
     
     void ApplyAudioSettings()
@@ -380,82 +280,119 @@ public class CompleteMenu : MonoBehaviour
     void UpdateVolumeTexts()
     {
         float displayMaster = isSoundOn ? masterVolume * 100f : 0f;
-        float displayMusic = isSoundOn ? musicVolume * 100f : 0f;
-        float displaySFX = isSoundOn ? sfxVolume * 100f : 0f;
         
         if (volumeValueText != null)
             volumeValueText.text = Mathf.RoundToInt(displayMaster) + "%";
+    }
+    
+    // ========== МЕТОДЫ ДЛЯ ПОСТ-ПРОЦЕССИНГА ==========
+    
+    void SetupPostProcessing()
+    {
+        if (globalVolume == null)
+            globalVolume = FindObjectOfType<Volume>();
             
-        if (masterVolumeText != null)
-            masterVolumeText.text = Mathf.RoundToInt(displayMaster) + "%";
-            
-        if (musicVolumeText != null)
-            musicVolumeText.text = Mathf.RoundToInt(displayMusic) + "%";
-            
-        if (sfxVolumeText != null)
-            sfxVolumeText.text = Mathf.RoundToInt(displaySFX) + "%";
-    }
-    
-    public void SetMasterVolume(float value)
-    {
-        masterVolume = value;
-        ApplyAudioSettings();
-        SaveSettings();
-    }
-    
-    public void SetMusicVolume(float value)
-    {
-        musicVolume = value;
-        ApplyAudioSettings();
-        SaveSettings();
-    }
-    
-    public void SetSFXVolume(float value)
-    {
-        sfxVolume = value;
-        ApplyAudioSettings();
-        SaveSettings();
-    }
-    
-    public void ToggleSound(bool isOn)
-    {
-        isSoundOn = isOn;
-        ApplyAudioSettings();
-        SaveSettings();
-        Debug.Log($"Звук {(isOn ? "включен" : "выключен")}");
-    }
-    
-    public void SetResolution(int index)
-    {
-        if (index < 0 || index >= resolutions.Length) return;
-        
-        Vector2Int res = resolutions[index];
-        Screen.SetResolution(res.x, res.y, Screen.fullScreen);
-        Debug.Log($"Разрешение: {res.x} x {res.y}");
-    }
-    
-    public void SetScreenMode(int index)
-    {
-        switch (index)
+        if (globalVolume != null && globalVolume.profile != null)
         {
-            case 0:
-                Screen.fullScreenMode = FullScreenMode.Windowed;
-                break;
-            case 1:
-                Screen.fullScreenMode = FullScreenMode.ExclusiveFullScreen;
-                break;
-            case 2:
-                Screen.fullScreenMode = FullScreenMode.FullScreenWindow;
-                break;
+            globalVolume.profile.TryGet(out bloom);
+            globalVolume.profile.TryGet(out motionBlur);
+            
+            Debug.Log($"Post Processing: Bloom={(bloom != null)}, MotionBlur={(motionBlur != null)}");
+        }
+        
+        if (postProcessingToggle != null)
+            postProcessingToggle.onValueChanged.AddListener(SetPostProcessing);
+            
+        if (bloomToggle != null)
+            bloomToggle.onValueChanged.AddListener(SetBloom);
+            
+        if (motionBlurToggle != null)
+            motionBlurToggle.onValueChanged.AddListener(SetMotionBlur);
+    }
+    
+    public void SetPostProcessing(bool enabled)
+    {
+        if (globalVolume != null)
+        {
+            globalVolume.enabled = enabled;
+            PlayerPrefs.SetInt("PostProcessingEnabled", enabled ? 1 : 0);
+            PlayerPrefs.Save();
+            
+            if (bloom != null && bloomToggle != null)
+                bloom.active = enabled && bloomToggle.isOn;
+                
+            if (motionBlur != null && motionBlurToggle != null)
+                motionBlur.active = enabled && motionBlurToggle.isOn;
         }
     }
     
-    public void SetFullscreen(bool isFullscreen)
+    public void SetBloom(bool enabled)
     {
-        Screen.fullScreen = isFullscreen;
+        if (bloom != null)
+        {
+            bool finalEnabled = enabled && (globalVolume != null && globalVolume.enabled);
+            bloom.active = finalEnabled;
+            PlayerPrefs.SetInt("BloomEnabled", enabled ? 1 : 0);
+            PlayerPrefs.Save();
+        }
     }
     
-    // Остальные методы (анимации, кнопки и т.д.)
+    public void SetMotionBlur(bool enabled)
+    {
+        if (motionBlur != null)
+        {
+            bool finalEnabled = enabled && (globalVolume != null && globalVolume.enabled);
+            motionBlur.active = finalEnabled;
+            PlayerPrefs.SetInt("MotionBlurEnabled", enabled ? 1 : 0);
+            PlayerPrefs.Save();
+        }
+    }
+    
+    // ========== МЕТОДЫ ДЛЯ СОХРАНЕНИЯ ==========
+    
+    void LoadSettings()
+    {
+        masterVolume = PlayerPrefs.GetFloat("MasterVolume", 1f);
+        musicVolume = PlayerPrefs.GetFloat("MusicVolume", 1f);
+        sfxVolume = PlayerPrefs.GetFloat("SFXVolume", 1f);
+        isSoundOn = PlayerPrefs.GetInt("SoundOn", 1) == 1;
+        
+        if (masterVolumeSlider != null) masterVolumeSlider.value = masterVolume;
+        if (musicVolumeSlider != null) musicVolumeSlider.value = musicVolume;
+        if (sfxVolumeSlider != null) sfxVolumeSlider.value = sfxVolume;
+        if (soundToggle != null) soundToggle.isOn = isSoundOn;
+        
+        ApplyAudioSettings();
+        
+        // Загрузка настроек пост-процессинга
+        if (globalVolume != null)
+        {
+            bool ppEnabled = PlayerPrefs.GetInt("PostProcessingEnabled", 1) == 1;
+            bool bloomEnabled = PlayerPrefs.GetInt("BloomEnabled", 1) == 1;
+            bool motionBlurEnabled = PlayerPrefs.GetInt("MotionBlurEnabled", 1) == 1;
+            
+            if (postProcessingToggle != null) postProcessingToggle.isOn = ppEnabled;
+            if (bloomToggle != null) bloomToggle.isOn = bloomEnabled;
+            if (motionBlurToggle != null) motionBlurToggle.isOn = motionBlurEnabled;
+            
+            globalVolume.enabled = ppEnabled;
+            
+            if (bloom != null) bloom.active = bloomEnabled && ppEnabled;
+            if (motionBlur != null) motionBlur.active = motionBlurEnabled && ppEnabled;
+        }
+    }
+    
+    void SaveSettings()
+    {
+        PlayerPrefs.SetFloat("MasterVolume", masterVolume);
+        PlayerPrefs.SetFloat("MusicVolume", musicVolume);
+        PlayerPrefs.SetFloat("SFXVolume", sfxVolume);
+        PlayerPrefs.SetInt("SoundOn", isSoundOn ? 1 : 0);
+        PlayerPrefs.Save();
+    }
+    
+    // ========== МЕТОДЫ ДЛЯ КНОПОК И АНИМАЦИЙ ==========
+    
     void SaveOriginalScales()
     {
         if (playButton != null) playOriginalScale = playButton.transform.localScale;
@@ -470,32 +407,32 @@ public class CompleteMenu : MonoBehaviour
         {
             playButton.onClick.RemoveAllListeners();
             playButton.onClick.AddListener(PlayGame);
-            AddButtonEvents(playButton, "Play");
+            AddButtonEvents(playButton, playOriginalScale);
         }
         
         if (settingsButton != null)
         {
             settingsButton.onClick.RemoveAllListeners();
             settingsButton.onClick.AddListener(OpenSettings);
-            AddButtonEvents(settingsButton, "Settings");
+            AddButtonEvents(settingsButton, settingsOriginalScale);
         }
         
         if (exitButton != null)
         {
             exitButton.onClick.RemoveAllListeners();
             exitButton.onClick.AddListener(ExitGame);
-            AddButtonEvents(exitButton, "Exit");
+            AddButtonEvents(exitButton, exitOriginalScale);
         }
         
         if (backButton != null)
         {
             backButton.onClick.RemoveAllListeners();
             backButton.onClick.AddListener(CloseSettings);
-            AddButtonEvents(backButton, "Back");
+            AddButtonEvents(backButton, backOriginalScale);
         }
     }
     
-    void AddButtonEvents(Button button, string buttonName)
+    void AddButtonEvents(Button button, Vector3 originalScale)
     {
         EventTrigger trigger = button.gameObject.GetComponent<EventTrigger>();
         if (trigger == null)
@@ -505,65 +442,61 @@ public class CompleteMenu : MonoBehaviour
         
         EventTrigger.Entry enterEntry = new EventTrigger.Entry();
         enterEntry.eventID = EventTriggerType.PointerEnter;
-        enterEntry.callback.AddListener((data) => { OnButtonHover(buttonName, true); });
+        enterEntry.callback.AddListener((data) => { OnButtonHover(button, originalScale, true); });
         trigger.triggers.Add(enterEntry);
         
         EventTrigger.Entry exitEntry = new EventTrigger.Entry();
         exitEntry.eventID = EventTriggerType.PointerExit;
-        exitEntry.callback.AddListener((data) => { OnButtonHover(buttonName, false); });
+        exitEntry.callback.AddListener((data) => { OnButtonHover(button, originalScale, false); });
         trigger.triggers.Add(exitEntry);
         
         EventTrigger.Entry downEntry = new EventTrigger.Entry();
         downEntry.eventID = EventTriggerType.PointerDown;
-        downEntry.callback.AddListener((data) => { OnButtonDown(buttonName); });
+        downEntry.callback.AddListener((data) => { OnButtonDown(button, originalScale); });
         trigger.triggers.Add(downEntry);
         
         EventTrigger.Entry upEntry = new EventTrigger.Entry();
         upEntry.eventID = EventTriggerType.PointerUp;
-        upEntry.callback.AddListener((data) => { OnButtonUp(buttonName); });
+        upEntry.callback.AddListener((data) => { OnButtonUp(button, originalScale); });
         trigger.triggers.Add(upEntry);
     }
     
-    void OnButtonHover(string buttonName, bool isHovering)
+    void StopAllButtonAnimations(Button button)
     {
-        if (isAnimating) return;
-        
-        Button button = GetButtonByName(buttonName);
-        Vector3 originalScale = GetOriginalScale(buttonName);
-        
-        if (button != null)
+        if (activeAnimations.ContainsKey(button) && activeAnimations[button] != null)
         {
-            StopAllCoroutines();
-            StartCoroutine(AnimateButtonScale(button, isHovering ? originalScale * hoverScale : originalScale));
+            StopCoroutine(activeAnimations[button]);
+            activeAnimations.Remove(button);
         }
     }
     
-    void OnButtonDown(string buttonName)
+    void OnButtonHover(Button button, Vector3 originalScale, bool isHovering)
     {
         if (isAnimating) return;
         
-        Button button = GetButtonByName(buttonName);
-        Vector3 originalScale = GetOriginalScale(buttonName);
+        StopAllButtonAnimations(button);
         
-        if (button != null)
-        {
-            StopAllCoroutines();
-            StartCoroutine(AnimateButtonScale(button, originalScale * clickScale));
-        }
+        Vector3 targetScale = isHovering ? originalScale * hoverScale : originalScale;
+        activeAnimations[button] = StartCoroutine(AnimateButtonScale(button, targetScale));
     }
     
-    void OnButtonUp(string buttonName)
+    void OnButtonDown(Button button, Vector3 originalScale)
     {
         if (isAnimating) return;
         
-        Button button = GetButtonByName(buttonName);
-        Vector3 originalScale = GetOriginalScale(buttonName);
+        StopAllButtonAnimations(button);
         
-        if (button != null)
-        {
-            StopAllCoroutines();
-            StartCoroutine(AnimateButtonScale(button, originalScale));
-        }
+        Vector3 targetScale = originalScale * clickScale;
+        activeAnimations[button] = StartCoroutine(AnimateButtonScale(button, targetScale));
+    }
+    
+    void OnButtonUp(Button button, Vector3 originalScale)
+    {
+        if (isAnimating) return;
+        
+        StopAllButtonAnimations(button);
+        
+        activeAnimations[button] = StartCoroutine(AnimateButtonScale(button, originalScale));
     }
     
     IEnumerator AnimateButtonScale(Button button, Vector3 targetScale)
@@ -580,30 +513,9 @@ public class CompleteMenu : MonoBehaviour
         }
         
         button.transform.localScale = targetScale;
-    }
-    
-    Button GetButtonByName(string buttonName)
-    {
-        switch (buttonName)
-        {
-            case "Play": return playButton;
-            case "Settings": return settingsButton;
-            case "Exit": return exitButton;
-            case "Back": return backButton;
-            default: return null;
-        }
-    }
-    
-    Vector3 GetOriginalScale(string buttonName)
-    {
-        switch (buttonName)
-        {
-            case "Play": return playOriginalScale;
-            case "Settings": return settingsOriginalScale;
-            case "Exit": return exitOriginalScale;
-            case "Back": return backOriginalScale;
-            default: return Vector3.one;
-        }
+        
+        if (activeAnimations.ContainsKey(button))
+            activeAnimations.Remove(button);
     }
     
     void Update()
