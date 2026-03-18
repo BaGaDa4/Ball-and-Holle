@@ -4,15 +4,16 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections;
 
-public class PauseWithAnimations : MonoBehaviour
+public class PauseWithButton : MonoBehaviour
 {
     [Header("Панель паузы")]
     public RectTransform pausePanel;
     
     [Header("Кнопки")]
-    public Button continueButton;
-    public Button menuButton;
-    public Button exitButton;
+    public Button pauseButton;      // Кнопка открытия паузы (в игровом UI)
+    public Button continueButton;   // Кнопка "Продолжить" в панели паузы
+    public Button menuButton;       // Кнопка "В меню" в панели паузы
+    public Button exitButton;       // Кнопка "Выход" в панели паузы
     
     [Header("Настройки")]
     public string mainMenuSceneName = "MainMenu";
@@ -28,6 +29,7 @@ public class PauseWithAnimations : MonoBehaviour
     private bool isAnimating = false;
     
     // Для хранения оригинальных размеров
+    private Vector3 pauseButtonOriginalScale;
     private Vector3 continueOriginalScale;
     private Vector3 menuOriginalScale;
     private Vector3 exitOriginalScale;
@@ -60,7 +62,7 @@ public class PauseWithAnimations : MonoBehaviour
         canvasGroup.alpha = 0f;
         canvasGroup.blocksRaycasts = true;
         
-        // Настраиваем кнопки
+        // Настраиваем все кнопки
         SaveOriginalScales();
         SetupButtons();
         AddButtonEffects();
@@ -89,6 +91,9 @@ public class PauseWithAnimations : MonoBehaviour
     
     void SaveOriginalScales()
     {
+        if (pauseButton != null)
+            pauseButtonOriginalScale = pauseButton.transform.localScale;
+            
         if (continueButton != null)
             continueOriginalScale = continueButton.transform.localScale;
             
@@ -101,18 +106,31 @@ public class PauseWithAnimations : MonoBehaviour
     
     void SetupButtons()
     {
+        // Кнопка открытия паузы (в игровом UI)
+        if (pauseButton != null)
+        {
+            pauseButton.onClick.RemoveAllListeners();
+            pauseButton.onClick.AddListener(() => {
+                if (!isPaused && !isAnimating)
+                    StartCoroutine(OpenPauseMenu());
+            });
+        }
+        
+        // Кнопка продолжения
         if (continueButton != null)
         {
             continueButton.onClick.RemoveAllListeners();
             continueButton.onClick.AddListener(() => StartCoroutine(OnContinueClick()));
         }
         
+        // Кнопка меню
         if (menuButton != null)
         {
             menuButton.onClick.RemoveAllListeners();
             menuButton.onClick.AddListener(() => StartCoroutine(OnMenuClick()));
         }
         
+        // Кнопка выхода
         if (exitButton != null)
         {
             exitButton.onClick.RemoveAllListeners();
@@ -122,6 +140,9 @@ public class PauseWithAnimations : MonoBehaviour
     
     void AddButtonEffects()
     {
+        if (pauseButton != null)
+            AddButtonEvents(pauseButton, pauseButtonOriginalScale);
+            
         if (continueButton != null)
             AddButtonEvents(continueButton, continueOriginalScale);
             
@@ -144,7 +165,7 @@ public class PauseWithAnimations : MonoBehaviour
         EventTrigger.Entry enterEntry = new EventTrigger.Entry();
         enterEntry.eventID = EventTriggerType.PointerEnter;
         enterEntry.callback.AddListener((data) => { 
-            if (!isAnimating && pausePanel.gameObject.activeSelf) 
+            if (!isAnimating) 
                 StartCoroutine(AnimateButtonScale(button, originalScale * buttonHoverScale, originalScale)); 
         });
         trigger.triggers.Add(enterEntry);
@@ -153,7 +174,7 @@ public class PauseWithAnimations : MonoBehaviour
         EventTrigger.Entry exitEntry = new EventTrigger.Entry();
         exitEntry.eventID = EventTriggerType.PointerExit;
         exitEntry.callback.AddListener((data) => { 
-            if (!isAnimating && pausePanel.gameObject.activeSelf) 
+            if (!isAnimating) 
                 StartCoroutine(AnimateButtonScale(button, originalScale, originalScale)); 
         });
         trigger.triggers.Add(exitEntry);
@@ -162,7 +183,7 @@ public class PauseWithAnimations : MonoBehaviour
         EventTrigger.Entry downEntry = new EventTrigger.Entry();
         downEntry.eventID = EventTriggerType.PointerDown;
         downEntry.callback.AddListener((data) => { 
-            if (!isAnimating && pausePanel.gameObject.activeSelf) 
+            if (!isAnimating) 
                 StartCoroutine(AnimateButtonScale(button, originalScale * buttonClickScale, originalScale)); 
         });
         trigger.triggers.Add(downEntry);
@@ -171,7 +192,7 @@ public class PauseWithAnimations : MonoBehaviour
         EventTrigger.Entry upEntry = new EventTrigger.Entry();
         upEntry.eventID = EventTriggerType.PointerUp;
         upEntry.callback.AddListener((data) => { 
-            if (!isAnimating && pausePanel.gameObject.activeSelf) 
+            if (!isAnimating) 
                 StartCoroutine(AnimateButtonScale(button, originalScale, originalScale)); 
         });
         trigger.triggers.Add(upEntry);
@@ -193,9 +214,31 @@ public class PauseWithAnimations : MonoBehaviour
         button.transform.localScale = targetScale;
     }
     
+    // Публичный метод для открытия паузы (можно вызвать из другой кнопки)
+    public void OpenPause()
+    {
+        if (!isPaused && !isAnimating)
+            StartCoroutine(OpenPauseMenu());
+    }
+    
+    // Публичный метод для закрытия паузы
+    public void ClosePause()
+    {
+        if (isPaused && !isAnimating)
+            StartCoroutine(ClosePauseMenu());
+    }
+    
     IEnumerator OpenPauseMenu()
     {
         isAnimating = true;
+        
+        // Анимация кнопки открытия паузы (если она была нажата)
+        if (pauseButton != null && !Input.GetKeyDown(KeyCode.Escape))
+        {
+            pauseButton.transform.localScale = pauseButtonOriginalScale * buttonClickScale;
+            yield return new WaitForSecondsRealtime(0.05f);
+            pauseButton.transform.localScale = pauseButtonOriginalScale;
+        }
         
         // Показываем панель
         pausePanel.gameObject.SetActive(true);

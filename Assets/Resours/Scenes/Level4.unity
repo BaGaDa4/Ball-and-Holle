@@ -376,7 +376,7 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4521c134e8117ea47919d82bfde47dcd, type: 3}
---- !u!1001 &439843435
+--- !u!1001 &526261424
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -464,12 +464,30 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5176315088463705065, guid: 02c4c27fed0d9de41b7d9dc7264f7d1b, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 187.53
+      objectReference: {fileID: 0}
     - target: {fileID: 6113506159692101545, guid: 02c4c27fed0d9de41b7d9dc7264f7d1b, type: 3}
       propertyPath: m_Name
-      value: Canvas (1)
+      value: Canvas (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 7816389173120164098, guid: 02c4c27fed0d9de41b7d9dc7264f7d1b, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 191
+      objectReference: {fileID: 0}
+    - target: {fileID: 8266250395071262019, guid: 02c4c27fed0d9de41b7d9dc7264f7d1b, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 191
+      objectReference: {fileID: 0}
+    - target: {fileID: 9039466971391678029, guid: 02c4c27fed0d9de41b7d9dc7264f7d1b, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 191
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 7558831977360426042, guid: 02c4c27fed0d9de41b7d9dc7264f7d1b, type: 3}
+    - {fileID: 5975446176511133460, guid: 02c4c27fed0d9de41b7d9dc7264f7d1b, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 02c4c27fed0d9de41b7d9dc7264f7d1b, type: 3}
@@ -1283,4 +1301,4 @@ SceneRoots:
   - {fileID: 91214092}
   - {fileID: 1479440278}
   - {fileID: 151007525}
-  - {fileID: 439843435}
+  - {fileID: 526261424}
