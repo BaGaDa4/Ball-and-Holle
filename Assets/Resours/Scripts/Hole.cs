@@ -53,43 +53,43 @@ public class Hole : MonoBehaviour
         transform.localScale = originalScale * pulse;
     }
     
-    void OnTriggerEnter2D(Collider2D other)
+   void OnTriggerEnter2D(Collider2D other)
+{
+    if (isActivated) return;
+    
+    if (other.CompareTag("Player"))
     {
-        // Если уже активирована - игнорируем
-        if (isActivated) return;
+        isActivated = true;
         
-        // Проверяем, что коснулся именно игрок
-        if (other.CompareTag("Player"))
+        Debug.Log($"ИГРОК КОСНУЛСЯ ЛУНКИ! Переход на сцену: {targetSceneName}");
+        
+        if (holeEffect != null)
         {
-            isActivated = true; // Ставим флаг, чтобы не сработало второй раз
-            
-            Debug.Log($"ИГРОК КОСНУЛСЯ ЛУНКИ! Переход на сцену: {targetSceneName}");
-            
-            // Эффект при касании
-            if (holeEffect != null)
-            {
-                Instantiate(holeEffect, transform.position, Quaternion.identity);
-            }
-            
-            // Проверяем, указано ли имя сцены
-            if (string.IsNullOrEmpty(targetSceneName))
-            {
-                Debug.LogError("Имя целевой сцены не указано!");
-                return;
-            }
-            
-            // Пробуем загрузить сцену
-            try
-            {
-                SceneManager.LoadScene(targetSceneName);
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"Ошибка загрузки сцены {targetSceneName}: {e.Message}");
-                Debug.Log("Убедись, что сцена добавлена в Build Settings!");
-            }
+            Instantiate(holeEffect, transform.position, Quaternion.identity);
+        }
+        
+        if (string.IsNullOrEmpty(targetSceneName))
+        {
+            Debug.LogError("Имя целевой сцены не указано!");
+            return;
+        }
+
+        // Сохраняем индекс
+        int currentIndex = PlayerPrefs.GetInt("LevelIndex", 0);
+        PlayerPrefs.SetInt("LevelIndex", currentIndex + 1);
+        PlayerPrefs.Save();
+        Debug.Log($"Новый индекс: {currentIndex + 1}");
+        
+        try
+        {
+            SceneManager.LoadScene(targetSceneName);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Ошибка загрузки сцены {targetSceneName}: {e.Message}");
         }
     }
+}
     
     // Визуализация
     void OnDrawGizmos()

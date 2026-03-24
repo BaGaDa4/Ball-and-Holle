@@ -1,0 +1,5 @@
+AutoTranslateLangs v1.002
+InterstitialAdv v1.01
+Localization v1.02
+RewardedAdv v1.011
+StickyAdv v1.0

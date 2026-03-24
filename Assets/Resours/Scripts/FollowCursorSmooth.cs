@@ -433,7 +433,10 @@ public class DragOnHoldWithCollision : MonoBehaviour
         int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
         int nextSceneIndex = currentSceneIndex + 1;
         
-        Debug.Log($"Текущий уровень: {currentSceneIndex}, Следующий: {nextSceneIndex}");
+        
+    PlayerPrefs.SetInt("LevelIndex", nextSceneIndex);
+    PlayerPrefs.Save();
+    Debug.Log($"Сохранён индекс: {nextSceneIndex}");
         
         if (nextSceneIndex < SceneManager.sceneCountInBuildSettings)
         {

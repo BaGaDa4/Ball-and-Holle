@@ -4,7 +4,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections;
 
-public class PauseWithButton : MonoBehaviour
+public class AdvancedPauseMenu : MonoBehaviour
 {
     [Header("Панель паузы")]
     public RectTransform pausePanel;
@@ -16,7 +16,7 @@ public class PauseWithButton : MonoBehaviour
     public Button exitButton;       // Кнопка "Выход" в панели паузы
     
     [Header("Настройки")]
-    public string mainMenuSceneName = "MainMenu";
+    public string mainMenuSceneName = "Menu";
     public float animationDuration = 0.3f;
     
     [Header("Настройки анимаций")]
@@ -68,20 +68,6 @@ public class PauseWithButton : MonoBehaviour
         AddButtonEffects();
     }
     
-    void Update()
-    {
-        // КАЖДЫЙ КАДР включаем курсор
-        ForceCursorVisible();
-        
-        // ESC открывает/закрывает паузу
-        if (Input.GetKeyDown(KeyCode.Escape) && !isAnimating)
-        {
-            if (isPaused)
-                StartCoroutine(ClosePauseMenu());
-            else
-                StartCoroutine(OpenPauseMenu());
-        }
-    }
     
     void ForceCursorVisible()
     {
